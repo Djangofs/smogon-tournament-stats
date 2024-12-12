@@ -1,0 +1,26 @@
+{
+  "name": "stats-api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/stats-api/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "stats-api:build",
+        "runBuildTargetDependencies": false
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "stats-api:build:development"
+        },
+        "production": {
+          "buildTarget": "stats-api:build:production"
+        }
+      }
+    }
+  }
+}

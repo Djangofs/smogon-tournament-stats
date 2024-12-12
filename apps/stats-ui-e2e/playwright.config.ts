@@ -25,7 +25,7 @@ export default defineConfig({
   },
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npx nx run smogon-tournament-stats:preview',
+    command: 'npx nx run stats-ui:preview',
     url: 'http://localhost:4300',
     reuseExistingServer: !process.env.CI,
     cwd: workspaceRoot,

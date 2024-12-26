@@ -2,7 +2,10 @@
   "name": "@org/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "prisma:generate": "prisma generate --schema apps/stats-api/src/prisma/schema.prisma",
+    "prisma:deploy": "yarn prisma migrate deploy --schema apps/stats-api/src/prisma/schema.prisma;"
+  },
   "private": true,
   "dependencies": {
     "@prisma/client": "^6.1.0",

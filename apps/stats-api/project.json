@@ -21,6 +21,12 @@
           "buildTarget": "stats-api:build:production"
         }
       }
+    },
+    "migrate": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "command": "yarn prisma migrate deploy"
+      }
     }
   }
 }

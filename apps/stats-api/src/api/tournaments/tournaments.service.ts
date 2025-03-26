@@ -5,6 +5,7 @@ import { createPlayer, createTournamentPlayer } from '../player/player.service';
 import { createTeam, createTournamentTeam } from '../team/team.service';
 import { roundData } from '../round/round.data';
 import { createMatch, createPlayerMatch } from '../match/match.service';
+import logger from '../../utils/logger';
 
 interface MatchData {
   roundIndex: number;
@@ -37,7 +38,7 @@ export const createTournament = async ({
   let tournament: TournamentDatabase;
   const existingTournament = await tournamentsData.findTournament({ name });
   if (existingTournament) {
-    console.log(`Tournament ${name} already exists`);
+    logger.info(`Tournament ${name} already exists`);
     tournament = existingTournament;
   } else {
     tournament = await tournamentsData.createTournament({ name });
@@ -103,7 +104,7 @@ export const createTournament = async ({
         const closeParenIndex = trimmedData.indexOf(')');
 
         if (vsIndex === -1 || openParenIndex === -1 || closeParenIndex === -1) {
-          console.log(`Could not parse match data: ${matchData}`);
+          logger.warn(`Could not parse match data: ${matchData}`);
           return null;
         }
 
@@ -191,7 +192,7 @@ export const createTournament = async ({
           createdPlayers.find((p) => p.name === match.opponent)?.id
       );
       if (!opponentPlayer) {
-        console.log(
+        logger.warn(
           `Could not find opponent player record for ${match.opponent}`
         );
         return null;
@@ -203,7 +204,7 @@ export const createTournament = async ({
           tp.playerId === createdPlayers.find((p) => p.name === row.player)?.id
       );
       if (!currentPlayer) {
-        console.log(`Could not find current player record for ${row.player}`);
+        logger.warn(`Could not find current player record for ${row.player}`);
         return null;
       }
 

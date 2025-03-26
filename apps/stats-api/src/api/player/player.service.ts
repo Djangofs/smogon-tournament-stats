@@ -1,10 +1,11 @@
 import { playerData } from './player.data';
+import logger from '../../utils/logger';
 
 export const createPlayer = async ({ name }: { name: string }) => {
   const existingPlayer = await playerData.findPlayer({ name });
 
   if (existingPlayer) {
-    console.log(`Player ${name} already exists`);
+    logger.info(`Player ${name} already exists`);
     return existingPlayer;
   }
 
@@ -26,7 +27,7 @@ export const createTournamentPlayer = async ({
   });
 
   if (existingTournamentPlayer) {
-    console.log(
+    logger.info(
       `Tournament player ${playerId + `:` + tournamentTeamId} already exists`
     );
     return existingTournamentPlayer;

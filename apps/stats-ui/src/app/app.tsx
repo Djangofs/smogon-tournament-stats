@@ -3,6 +3,7 @@ import { Provider } from 'react-redux';
 import { Route, Routes, useLocation } from 'react-router-dom';
 
 import { TournamentsPage } from './pages/tournaments.page';
+import { HomePage } from './pages/home.page';
 import { store } from './store/store';
 import { Nav } from './components/navigation';
 
@@ -16,37 +17,29 @@ const StyledApp = styled.div`
 
 const MainContent = styled.main`
   flex: 1;
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-  line-height: 1.5;
+  background-color: #f5f5f5;
 `;
 
-export const App = () => {
+function AppContent() {
   const location = useLocation();
 
   return (
+    <StyledApp>
+      <Nav currentPath={location.pathname} />
+      <MainContent>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/tournaments" element={<TournamentsPage />} />
+        </Routes>
+      </MainContent>
+    </StyledApp>
+  );
+}
+
+export default function App() {
+  return (
     <Provider store={store}>
-      <StyledApp>
-        <Nav currentPath={location.pathname} />
-        <MainContent>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <div>
-                  Welcome to Smogon Stats! Select a tournament to view
-                  statistics.
-                </div>
-              }
-            />
-            <Route path="/tournaments" element={<TournamentsPage />} />
-          </Routes>
-        </MainContent>
-      </StyledApp>
+      <AppContent />
     </Provider>
   );
-};
-
-export default App;
+}

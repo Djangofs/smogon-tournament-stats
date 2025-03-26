@@ -5,6 +5,7 @@ import { createPlayer, createTournamentPlayer } from '../player/player.service';
 import { createTeam, createTournamentTeam } from '../team/team.service';
 import { roundData } from '../round/round.data';
 import { createMatch, createPlayerMatch } from '../match/match.service';
+import { createGame } from '../game/game.service';
 import logger from '../../utils/logger';
 
 interface MatchData {
@@ -216,19 +217,25 @@ export const createTournament = async ({
         player2Id: opponentPlayer.playerId,
       });
 
-      // Create player match records
+      // Create a game for the match
+      await createGame({
+        matchId: newMatch.id,
+        player1Id: currentPlayer.playerId,
+        player2Id: opponentPlayer.playerId,
+        player1Winner: match.result === 'W',
+      });
+
+      // Create player match records based on game results
       await createPlayerMatch({
         playerId: currentPlayer.playerId,
         matchId: newMatch.id,
         tournament_teamId: currentPlayer.tournament_teamId,
-        winner: match.result === 'W',
       });
 
       await createPlayerMatch({
         playerId: opponentPlayer.playerId,
         matchId: newMatch.id,
         tournament_teamId: opponentPlayer.tournament_teamId,
-        winner: match.result === 'L',
       });
 
       return newMatch;

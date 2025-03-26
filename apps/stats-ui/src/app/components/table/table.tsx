@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { useState } from 'react';
 
 const StyledTable = styled.table`
   width: 100%;
@@ -15,6 +16,12 @@ const StyledTable = styled.table`
     color: #495057;
     border-bottom: 2px solid #dee2e6;
     background-color: #f8f9fa;
+    cursor: pointer;
+    user-select: none;
+
+    &:hover {
+      background-color: #e9ecef;
+    }
   }
 
   td {
@@ -33,18 +40,56 @@ const StyledTable = styled.table`
   }
 `;
 
+const SortIcon = styled.span`
+  margin-left: 0.5rem;
+  color: #6c757d;
+`;
+
 interface TableProps {
   headers: string[];
   children: React.ReactNode;
+  onSort?: (column: string, direction: 'asc' | 'desc') => void;
+  initialSortColumn?: string;
+  initialSortDirection?: 'asc' | 'desc';
 }
 
-export function Table({ headers, children }: TableProps) {
+export function Table({
+  headers,
+  children,
+  onSort,
+  initialSortColumn,
+  initialSortDirection = 'asc',
+}: TableProps) {
+  const [sortColumn, setSortColumn] = useState<string | null>(
+    initialSortColumn || null
+  );
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(
+    initialSortDirection
+  );
+
+  const handleSort = (header: string) => {
+    if (sortColumn === header) {
+      const newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      setSortDirection(newDirection);
+      onSort?.(header, newDirection);
+    } else {
+      setSortColumn(header);
+      setSortDirection('asc');
+      onSort?.(header, 'asc');
+    }
+  };
+
   return (
     <StyledTable>
       <thead>
         <tr>
           {headers.map((header) => (
-            <th key={header}>{header}</th>
+            <th key={header} onClick={() => handleSort(header)}>
+              {header}
+              {sortColumn === header && (
+                <SortIcon>{sortDirection === 'asc' ? '↑' : '↓'}</SortIcon>
+              )}
+            </th>
           ))}
         </tr>
       </thead>

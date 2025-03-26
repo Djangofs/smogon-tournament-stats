@@ -1,6 +1,30 @@
 import { playerData } from './player.data';
 import logger from '../../utils/logger';
 
+interface PlayerWithStats {
+  id: string;
+  name: string;
+  matchesWon: number;
+  matchesLost: number;
+}
+
+export const getAllPlayers = async (): Promise<PlayerWithStats[]> => {
+  const players = await playerData.getAllPlayers();
+
+  return players.map((player) => {
+    console.log(player.matches);
+    const matchesWon = player.matches.filter((match) => match.winner).length;
+    const matchesLost = player.matches.filter((match) => !match.winner).length;
+
+    return {
+      id: player.id,
+      name: player.name,
+      matchesWon,
+      matchesLost,
+    };
+  });
+};
+
 export const createPlayer = async ({ name }: { name: string }) => {
   const existingPlayer = await playerData.findPlayer({ name });
 

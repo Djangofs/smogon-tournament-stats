@@ -2,6 +2,18 @@ import { PrismaClient } from '@prisma/client';
 
 const client = new PrismaClient();
 
+const getAllPlayers = async () => {
+  return client.player.findMany({
+    include: {
+      matches: {
+        select: {
+          winner: true,
+        },
+      },
+    },
+  });
+};
+
 const createPlayer = async ({ name }: { name: string }) => {
   return client.player.create({ data: { name } });
 };
@@ -41,6 +53,7 @@ const findTournamentPlayer = async ({
 };
 
 export const playerData = {
+  getAllPlayers,
   createPlayer,
   createPlayers,
   findPlayer,

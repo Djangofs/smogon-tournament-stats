@@ -4,6 +4,7 @@ import { Route, Routes, useLocation } from 'react-router-dom';
 
 import { TournamentsPage } from './pages/tournaments.page';
 import { HomePage } from './pages/home.page';
+import { PlayersPage } from './pages/players.page';
 import { store } from './store/store';
 import { Nav } from './components/navigation';
 
@@ -30,6 +31,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/tournaments" element={<TournamentsPage />} />
+          <Route path="/players" element={<PlayersPage />} />
         </Routes>
       </MainContent>
     </StyledApp>

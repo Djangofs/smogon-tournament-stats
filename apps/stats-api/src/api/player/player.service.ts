@@ -12,7 +12,6 @@ export const getAllPlayers = async (): Promise<PlayerWithStats[]> => {
   const players = await playerData.getAllPlayers();
 
   return players.map((player) => {
-    console.log(player.matches);
     const matchesWon = player.matches.filter((match) => match.winner).length;
     const matchesLost = player.matches.filter((match) => !match.winner).length;
 

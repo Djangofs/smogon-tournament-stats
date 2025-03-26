@@ -3,7 +3,7 @@ import { tournamentsData } from './tournaments.data';
 import { TournamentDatabase } from './tournaments.model';
 import { createPlayer, createTournamentPlayer } from '../player/player.service';
 import { createTeam, createTournamentTeam } from '../team/team.service';
-import { roundData } from '../round/round.data';
+import { createRound } from '../round/round.service';
 import { createMatch, createPlayerMatch } from '../match/match.service';
 import { createGame } from '../game/game.service';
 import logger from '../../utils/logger';
@@ -176,7 +176,7 @@ export const createTournament = async ({
   // Create rounds and matches
   for (const roundIndex of roundIndices) {
     const roundName = data[0][roundIndex];
-    const round = await roundData.createRound({
+    const round = await createRound({
       tournamentId: tournament.id,
       name: roundName,
     });

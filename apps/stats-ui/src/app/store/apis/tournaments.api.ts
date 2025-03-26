@@ -7,17 +7,34 @@ export type Tournament = {
   name: string;
 };
 
+export type CreateTournamentRequest = {
+  name: string;
+  sheetName: string;
+  sheetId: string;
+};
+
 // Define a service using a base URL and expected endpoints
 export const tournamentsApi = createApi({
   reducerPath: 'tournamentsApi',
   baseQuery: fetchBaseQuery({ baseUrl: environment.apiUrl }),
+  tagTypes: ['Tournaments'],
   endpoints: (builder) => ({
     getTournaments: builder.query<Tournament[], void>({
       query: () => `tournaments`,
+      providesTags: ['Tournaments'],
+    }),
+    createTournament: builder.mutation<Tournament, CreateTournamentRequest>({
+      query: (data) => ({
+        url: 'tournament',
+        method: 'POST',
+        body: data,
+      }),
+      // Invalidate the getTournaments query to trigger a refetch
+      invalidatesTags: ['Tournaments'],
     }),
   }),
 });
 
-// Export hooks for usage in functional components, which are
-// auto-generated based on the defined endpoints
-export const { useGetTournamentsQuery } = tournamentsApi;
+// Export hooks for usage in components
+export const { useGetTournamentsQuery, useCreateTournamentMutation } =
+  tournamentsApi;

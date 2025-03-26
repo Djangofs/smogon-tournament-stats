@@ -6,6 +6,7 @@ import bodyParser from 'body-parser';
 import {
   getAllTournamentsRoute,
   createTournamentRoute,
+  getTournamentByIdRoute,
 } from './api/tournaments/tournaments.route';
 import {
   getAllPlayersRoute,
@@ -21,6 +22,10 @@ app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 app.get('/api', (req, res) => {
   res.send({ message: 'Welcome to stats-api!' });
+});
+
+app.get('/tournaments/:id', async (req, res) => {
+  return getTournamentByIdRoute(req, res);
 });
 
 app.get('/tournaments', async (req, res) => {

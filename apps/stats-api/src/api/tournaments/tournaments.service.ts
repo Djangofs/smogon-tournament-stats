@@ -92,6 +92,12 @@ export const getAllTournaments = async (): Promise<TournamentDatabase[]> => {
   return tournamentsData.getAllTournaments();
 };
 
+export const getTournamentById = async (
+  id: string
+): Promise<TournamentDatabase> => {
+  return tournamentsData.getTournamentById(id);
+};
+
 export const createTournament = async ({
   name,
   sheetName,

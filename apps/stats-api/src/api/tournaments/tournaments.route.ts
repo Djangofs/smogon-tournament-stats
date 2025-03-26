@@ -1,11 +1,16 @@
 import { Request, Response } from 'express';
 import { getAllTournaments, createTournament } from './tournaments.service';
 import { TournamentDTO } from './tournaments.model';
+import { tournamentsController } from './tournaments.controller';
 
 export const getAllTournamentsRoute = async (req: Request, res: Response) => {
   const tournaments = await getAllTournamentsController();
 
   res.send(tournaments);
+};
+
+export const getTournamentByIdRoute = async (req: Request, res: Response) => {
+  return tournamentsController.getTournamentById(req, res);
 };
 
 const getAllTournamentsController = async (): Promise<TournamentDTO[]> => {

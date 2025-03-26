@@ -9,6 +9,33 @@ export interface Tournament {
   isTeam: boolean;
   createdAt: string;
   updatedAt: string;
+  rounds?: Round[];
+}
+
+export interface Player {
+  id: string;
+  name: string;
+}
+
+export interface PlayerMatch {
+  playerId: string;
+  matchId: string;
+  tournament_teamId: string;
+  winner: boolean;
+  createdAt: string;
+  updatedAt: string;
+  player: Player;
+}
+export interface Round {
+  id: string;
+  name: string;
+  matches?: Match[];
+}
+
+export interface Match {
+  id: string;
+  players: PlayerMatch[];
+  result: string;
 }
 
 export interface CreateTournamentRequest {
@@ -29,6 +56,9 @@ export const tournamentsApi = createApi({
       query: () => 'tournaments',
       providesTags: ['Tournaments'],
     }),
+    getTournamentById: builder.query<Tournament, string>({
+      query: (id) => `tournaments/${id}`,
+    }),
     createTournament: builder.mutation<Tournament, CreateTournamentRequest>({
       query: (tournament) => ({
         url: 'tournament',
@@ -42,5 +72,8 @@ export const tournamentsApi = createApi({
 });
 
 // Export hooks for usage in components
-export const { useGetTournamentsQuery, useCreateTournamentMutation } =
-  tournamentsApi;
+export const {
+  useGetTournamentsQuery,
+  useGetTournamentByIdQuery,
+  useCreateTournamentMutation,
+} = tournamentsApi;

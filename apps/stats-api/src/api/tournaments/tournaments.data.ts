@@ -12,6 +12,27 @@ const findTournament = async ({ name }: { name: string }) => {
   });
 };
 
+const getTournamentById = async (id: string) => {
+  return client.tournament.findUnique({
+    where: { id },
+    include: {
+      rounds: {
+        include: {
+          matches: {
+            include: {
+              players: {
+                include: {
+                  player: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
 const createTournament = async ({
   name,
   isOfficial,
@@ -29,5 +50,6 @@ const createTournament = async ({
 export const tournamentsData = {
   getAllTournaments,
   findTournament,
+  getTournamentById,
   createTournament,
 };

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   useGetTournamentsQuery,
   useCreateTournamentMutation,
@@ -37,6 +38,15 @@ const Flag = styled.span<{ active: boolean }>`
   color: ${(props) => (props.active ? '#0066cc' : '#666')};
 `;
 
+const TournamentCard = styled(Card)`
+  cursor: pointer;
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+`;
+
 export function TournamentsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { data: tournaments, isLoading } = useGetTournamentsQuery();
@@ -71,19 +81,25 @@ export function TournamentsPage() {
 
       <TournamentList>
         {tournaments?.map((tournament: Tournament) => (
-          <Card key={tournament.id}>
-            <TournamentHighlight>
-              <TournamentTitle>{tournament.name}</TournamentTitle>
-              <TournamentMeta>
-                {tournament.isOfficial && (
-                  <Flag active={tournament.isOfficial}>Official</Flag>
-                )}
-                {tournament.isTeam && (
-                  <Flag active={tournament.isTeam}>Team</Flag>
-                )}
-              </TournamentMeta>
-            </TournamentHighlight>
-          </Card>
+          <Link
+            to={`/tournaments/${tournament.id}`}
+            key={tournament.id}
+            style={{ textDecoration: 'none' }}
+          >
+            <TournamentCard>
+              <TournamentHighlight>
+                <TournamentTitle>{tournament.name}</TournamentTitle>
+                <TournamentMeta>
+                  {tournament.isOfficial && (
+                    <Flag active={tournament.isOfficial}>Official</Flag>
+                  )}
+                  {tournament.isTeam && (
+                    <Flag active={tournament.isTeam}>Team</Flag>
+                  )}
+                </TournamentMeta>
+              </TournamentHighlight>
+            </TournamentCard>
+          </Link>
         ))}
       </TournamentList>
 

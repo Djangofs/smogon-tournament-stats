@@ -1,4 +1,5 @@
 import { matchData } from './match.data';
+import logger from '../../utils/logger';
 
 export const createMatch = async ({
   roundId,
@@ -36,6 +37,16 @@ export const createPlayerMatch = async ({
   tournament_teamId: string;
   winner: boolean;
 }) => {
+  const existingPlayerMatch = await matchData.findPlayerMatch({
+    playerId,
+    matchId,
+  });
+
+  if (existingPlayerMatch) {
+    logger.info(`Player match ${playerId}:${matchId} already exists`);
+    return existingPlayerMatch;
+  }
+
   return matchData.createPlayerMatch({
     playerId,
     matchId,

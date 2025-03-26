@@ -72,9 +72,27 @@ const getMatch = async ({ matchId }: { matchId: string }) => {
   });
 };
 
+const findPlayerMatch = async ({
+  playerId,
+  matchId,
+}: {
+  playerId: string;
+  matchId: string;
+}) => {
+  return client.player_Match.findUnique({
+    where: {
+      playerId_matchId: {
+        playerId,
+        matchId,
+      },
+    },
+  });
+};
+
 export const matchData = {
   createMatch,
   createPlayerMatch,
   getRoundMatches,
   getMatch,
+  findPlayerMatch,
 };

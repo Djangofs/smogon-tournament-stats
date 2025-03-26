@@ -94,14 +94,30 @@ export const createTournament = async ({
         if (!matchData) return null;
 
         // Parse match data (e.g., "vs. reiku (W) ORAS OU")
-        const matchParts = matchData.match(/vs\. (.*?) \((W|L)\) (.*)/);
-        if (!matchParts) return null;
+        const trimmedData = matchData.trim();
+        if (!trimmedData.startsWith('vs.')) return null;
 
-        const [, opponent, result, tier] = matchParts;
+        // Extract opponent name and result
+        const vsIndex = trimmedData.indexOf('vs.');
+        const openParenIndex = trimmedData.indexOf('(');
+        const closeParenIndex = trimmedData.indexOf(')');
+
+        if (vsIndex === -1 || openParenIndex === -1 || closeParenIndex === -1) {
+          console.log(`Could not parse match data: ${matchData}`);
+          return null;
+        }
+
+        const opponent = trimmedData.slice(vsIndex + 3, openParenIndex).trim();
+        const result = trimmedData.slice(
+          openParenIndex + 1,
+          closeParenIndex
+        ) as 'W' | 'L';
+        const tier = trimmedData.slice(closeParenIndex + 1).trim();
+
         return {
           roundIndex,
           opponent,
-          result: result as 'W' | 'L',
+          result,
           tier,
           roundName: data[0][roundIndex],
         };
@@ -174,13 +190,22 @@ export const createTournament = async ({
           tp.playerId ===
           createdPlayers.find((p) => p.name === match.opponent)?.id
       );
-      if (!opponentPlayer) return null;
+      if (!opponentPlayer) {
+        console.log(
+          `Could not find opponent player record for ${match.opponent}`
+        );
+        return null;
+      }
 
       // Find current player's tournament player record
       const currentPlayer = tournamentPlayers.find(
         (tp) =>
           tp.playerId === createdPlayers.find((p) => p.name === row.player)?.id
       );
+      if (!currentPlayer) {
+        console.log(`Could not find current player record for ${row.player}`);
+        return null;
+      }
 
       // Create the match
       const newMatch = await createMatch({
@@ -208,7 +233,7 @@ export const createTournament = async ({
       return newMatch;
     });
 
-    await Promise.all(matchPromises.filter(Boolean));
+    await Promise.all(matchPromises);
   }
 
   return tournament;

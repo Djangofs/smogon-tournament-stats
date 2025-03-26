@@ -2,16 +2,22 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 import { environment } from '../../../environments/environment';
 
-export type Tournament = {
+export interface Tournament {
   id: string;
   name: string;
-};
+  isOfficial: boolean;
+  isTeam: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
-export type CreateTournamentRequest = {
+export interface CreateTournamentRequest {
   name: string;
   sheetName: string;
   sheetId: string;
-};
+  isOfficial?: boolean;
+  isTeam?: boolean;
+}
 
 // Define a service using a base URL and expected endpoints
 export const tournamentsApi = createApi({
@@ -20,14 +26,14 @@ export const tournamentsApi = createApi({
   tagTypes: ['Tournaments'],
   endpoints: (builder) => ({
     getTournaments: builder.query<Tournament[], void>({
-      query: () => `tournaments`,
+      query: () => 'tournaments',
       providesTags: ['Tournaments'],
     }),
     createTournament: builder.mutation<Tournament, CreateTournamentRequest>({
-      query: (data) => ({
-        url: 'tournament',
+      query: (tournament) => ({
+        url: 'tournaments',
         method: 'POST',
-        body: data,
+        body: tournament,
       }),
       // Invalidate the getTournaments query to trigger a refetch
       invalidatesTags: ['Tournaments'],

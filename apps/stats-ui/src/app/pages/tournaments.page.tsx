@@ -3,11 +3,17 @@ import {
   useGetTournamentsQuery,
   useCreateTournamentMutation,
 } from '../store/apis/tournaments.api';
-import { Card } from '../components/card/card';
-import { Grid } from '../components/grid/grid';
-import { Container } from '../components/layout/layout';
 import { Modal } from '../components/modal/modal';
+import { Card } from '../components/card/card';
+import { Container, TournamentHighlight } from '../components/layout/layout';
+import {
+  TournamentTitle,
+  TournamentMeta,
+} from '../components/typography/typography';
+import { Button } from '../components/button/button';
+import { PageTitle } from '../components/typography/page-title';
 import styled from 'styled-components';
+import { Tournament } from '../store/apis/tournaments.api';
 
 const Header = styled.div`
   display: flex;
@@ -16,83 +22,75 @@ const Header = styled.div`
   margin-bottom: 2rem;
 `;
 
-const ButtonWrapper = styled.div`
-  button {
-    background-color: #0066cc;
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 4px;
-    font-size: 1rem;
-    cursor: pointer;
+const TournamentList = styled.div`
+  display: grid;
+  gap: 1rem;
+`;
 
-    &:hover {
-      background-color: #0052a3;
-    }
-  }
+const Flag = styled.span<{ active: boolean }>`
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  margin-right: 0.5rem;
+  background: ${(props) => (props.active ? '#e6f3ff' : '#f5f5f5')};
+  color: ${(props) => (props.active ? '#0066cc' : '#666')};
 `;
 
 export function TournamentsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const {
-    data: tournaments,
-    isLoading,
-    isError,
-    error,
-  } = useGetTournamentsQuery();
+  const { data: tournaments, isLoading } = useGetTournamentsQuery();
   const [createTournament, { isLoading: isCreating }] =
     useCreateTournamentMutation();
 
-  const handleImport = async (data: {
+  const handleSubmit = async (data: {
     name: string;
     sheetName: string;
     sheetId: string;
+    isOfficial: boolean;
+    isTeam: boolean;
   }) => {
     try {
       await createTournament(data).unwrap();
       setIsModalOpen(false);
     } catch (error) {
-      console.error('Error importing tournament:', error);
-      // TODO: Show error message to user
+      console.error('Failed to create tournament:', error);
     }
   };
 
   if (isLoading) {
-    return <div>Loading tournaments...</div>;
-  }
-
-  if (isError) {
-    return <div>Error: {error?.toString()}</div>;
+    return <div>Loading...</div>;
   }
 
   return (
     <Container>
       <Header>
-        <div>
-          <h1>Tournaments</h1>
-          <p>Browse all Smogon tournaments and their statistics</p>
-        </div>
-        <ButtonWrapper>
-          <button type="button" onClick={() => setIsModalOpen(true)}>
-            Import Tournament
-          </button>
-        </ButtonWrapper>
+        <PageTitle>Tournaments</PageTitle>
+        <Button onClick={() => setIsModalOpen(true)}>Create Tournament</Button>
       </Header>
 
-      <Grid>
-        {tournaments?.map((tournament) => (
-          <Card key={tournament.id} title={tournament.name}>
-            <div>
-              <p>Tournament ID: {tournament.id}</p>
-            </div>
+      <TournamentList>
+        {tournaments?.map((tournament: Tournament) => (
+          <Card key={tournament.id}>
+            <TournamentHighlight>
+              <TournamentTitle>{tournament.name}</TournamentTitle>
+              <TournamentMeta>
+                {tournament.isOfficial && (
+                  <Flag active={tournament.isOfficial}>Official</Flag>
+                )}
+                {tournament.isTeam && (
+                  <Flag active={tournament.isTeam}>Team</Flag>
+                )}
+              </TournamentMeta>
+            </TournamentHighlight>
           </Card>
         ))}
-      </Grid>
+      </TournamentList>
 
       <Modal
         isOpen={isModalOpen}
-        onClose={() => !isCreating && setIsModalOpen(false)}
-        onSubmit={handleImport}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubmit}
         isLoading={isCreating}
       />
     </Container>

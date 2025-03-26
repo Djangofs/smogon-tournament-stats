@@ -5,10 +5,7 @@ import { createTeam, createTournamentTeam } from '../team/team.service';
 import { createRound } from '../round/round.service';
 import { createMatch, createPlayerMatch } from '../match/match.service';
 import { createGame } from '../game/game.service';
-import {
-  extractTournamentData,
-  PlayerData,
-} from '../extraction/extraction.service';
+import { extractTournamentData } from '../extraction/extraction.service';
 import logger from '../../utils/logger';
 
 interface TournamentPlayer {
@@ -93,10 +90,14 @@ export const createTournament = async ({
   name,
   sheetName,
   sheetId,
+  isOfficial,
+  isTeam,
 }: {
   name: string;
   sheetName: string;
   sheetId: string;
+  isOfficial: boolean;
+  isTeam: boolean;
 }) => {
   let tournament: TournamentDatabase;
   const existingTournament = await tournamentsData.findTournament({ name });
@@ -104,7 +105,11 @@ export const createTournament = async ({
     logger.info(`Tournament ${name} already exists`);
     tournament = existingTournament;
   } else {
-    tournament = await tournamentsData.createTournament({ name });
+    tournament = await tournamentsData.createTournament({
+      name,
+      isOfficial,
+      isTeam,
+    });
   }
 
   // Extract data from spreadsheet

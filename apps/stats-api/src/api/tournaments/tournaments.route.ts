@@ -15,12 +15,14 @@ const getAllTournamentsController = async (): Promise<TournamentDTO[]> => {
 };
 
 export const createTournamentRoute = async (req: Request, res: Response) => {
-  const { name, sheetName, sheetId } = req.body;
+  const { name, sheetName, sheetId, isOfficial, isTeam } = req.body;
 
   const tournament = await createTournamentController({
     name,
     sheetName,
     sheetId,
+    isOfficial,
+    isTeam,
   });
 
   res.send(tournament);
@@ -30,12 +32,22 @@ const createTournamentController = async ({
   name,
   sheetName,
   sheetId,
+  isOfficial,
+  isTeam,
 }: {
   name: string;
   sheetName: string;
   sheetId: string;
+  isOfficial: boolean;
+  isTeam: boolean;
 }) => {
-  const tournament = await createTournament({ name, sheetName, sheetId });
+  const tournament = await createTournament({
+    name,
+    sheetName,
+    sheetId,
+    isOfficial,
+    isTeam,
+  });
 
   return tournament;
 };

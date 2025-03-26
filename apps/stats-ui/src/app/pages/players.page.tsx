@@ -1,6 +1,7 @@
 import { useGetPlayersQuery } from '../store/apis/players.api';
 import { Container } from '../components/layout/layout';
 import { Table } from '../components/table/table';
+import { PageTitle } from '../components/typography/page-title';
 
 export function PlayersPage() {
   const { data: players, isLoading, isError, error } = useGetPlayersQuery();
@@ -15,7 +16,7 @@ export function PlayersPage() {
 
   return (
     <Container>
-      <h1>Players</h1>
+      <PageTitle>Players</PageTitle>
       <p>Browse all Smogon tournament players and their statistics</p>
 
       <Table headers={['Name', 'Matches Won', 'Matches Lost', 'Win Rate']}>

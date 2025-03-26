@@ -18,6 +18,8 @@ model Tournament {
   name      String
   rounds    Round[]
   rosters   Tournament_Team[]
+  isOfficial Boolean @default(false)
+  isTeam     Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

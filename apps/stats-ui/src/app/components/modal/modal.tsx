@@ -105,6 +105,19 @@ const StyledInput = styled.input`
   }
 `;
 
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+`;
+
+const StyledCheckbox = styled.input.attrs({ type: 'checkbox' })`
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+`;
+
 const StyledSubmitButton = styled.button.attrs({ type: 'submit' })`
   background-color: #0066cc;
   color: white;
@@ -133,6 +146,8 @@ interface ModalProps {
     name: string;
     sheetName: string;
     sheetId: string;
+    isOfficial: boolean;
+    isTeam: boolean;
   }) => void;
   isLoading?: boolean;
 }
@@ -152,6 +167,8 @@ export function Modal({
       name: formData.get('name') as string,
       sheetName: formData.get('sheetName') as string,
       sheetId: formData.get('sheetId') as string,
+      isOfficial: formData.get('isOfficial') === 'true',
+      isTeam: formData.get('isTeam') === 'true',
     });
   };
 
@@ -197,6 +214,22 @@ export function Modal({
               placeholder="e.g., 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
               disabled={isLoading}
             />
+          </FormGroup>
+          <FormGroup>
+            <CheckboxLabel>
+              <StyledCheckbox
+                name="isOfficial"
+                value="true"
+                disabled={isLoading}
+              />
+              Official Tournament
+            </CheckboxLabel>
+          </FormGroup>
+          <FormGroup>
+            <CheckboxLabel>
+              <StyledCheckbox name="isTeam" value="true" disabled={isLoading} />
+              Team Tournament
+            </CheckboxLabel>
           </FormGroup>
           <StyledSubmitButton disabled={isLoading}>
             {isLoading ? 'Importing...' : 'Import Tournament'}

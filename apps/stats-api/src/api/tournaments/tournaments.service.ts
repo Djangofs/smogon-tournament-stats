@@ -17,6 +17,11 @@ interface TournamentPlayer {
   updatedAt: Date;
 }
 
+interface PlayerRecord {
+  id: string;
+  name: string;
+}
+
 const createMatchWithGame = async ({
   roundId,
   currentPlayer,
@@ -63,16 +68,17 @@ const createMatchWithGame = async ({
 const findTournamentPlayer = (
   playerName: string,
   tournamentPlayers: TournamentPlayer[],
-  createdPlayers: { id: string; name: string }[]
+  createdPlayers: PlayerRecord[]
 ): TournamentPlayer | null => {
-  const playerId = createdPlayers.find((p) => p.name === playerName)?.id;
-  if (!playerId) {
+  // Find the player by name or alias
+  const player = createdPlayers.find((p) => p.name === playerName);
+  if (!player) {
     logger.warn(`Could not find player record for ${playerName}`);
     return null;
   }
 
   const tournamentPlayer = tournamentPlayers.find(
-    (tp) => tp.playerId === playerId
+    (tp) => tp.playerId === player.id
   );
   if (!tournamentPlayer) {
     logger.warn(`Could not find tournament player record for ${playerName}`);

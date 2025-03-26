@@ -8,6 +8,11 @@ interface PlayerWithStats {
   matchesLost: number;
 }
 
+interface PlayerRecord {
+  id: string;
+  name: string;
+}
+
 export const getAllPlayers = async (): Promise<PlayerWithStats[]> => {
   const players = await playerData.getAllPlayers();
 
@@ -24,15 +29,31 @@ export const getAllPlayers = async (): Promise<PlayerWithStats[]> => {
   });
 };
 
-export const createPlayer = async ({ name }: { name: string }) => {
-  const existingPlayer = await playerData.findPlayer({ name });
+export const createPlayer = async ({
+  name,
+}: {
+  name: string;
+}): Promise<PlayerRecord> => {
+  // First try to find player by name or alias
+  const existingPlayer = await playerData.findPlayerByName({ name });
 
   if (existingPlayer) {
-    logger.info(`Player ${name} already exists`);
-    return existingPlayer;
+    logger.info(
+      `Found existing player ${existingPlayer.currentName} for name ${name}`
+    );
+    return {
+      id: existingPlayer.id,
+      name: existingPlayer.currentName,
+    };
   }
 
-  return playerData.createPlayer({ name });
+  // If no existing player found, create a new one
+  logger.info(`Creating new player ${name}`);
+  const newPlayer = await playerData.createPlayer({ name });
+  return {
+    id: newPlayer.id,
+    name: newPlayer.name,
+  };
 };
 
 export const createTournamentPlayer = async ({

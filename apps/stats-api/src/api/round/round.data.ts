@@ -2,6 +2,21 @@ import { PrismaClient } from '@prisma/client';
 
 const client = new PrismaClient();
 
+const findRound = async ({
+  tournamentId,
+  name,
+}: {
+  tournamentId: string;
+  name: string;
+}) => {
+  return client.round.findFirst({
+    where: {
+      tournamentId,
+      name,
+    },
+  });
+};
+
 const createRound = async ({
   tournamentId,
   name,
@@ -47,4 +62,5 @@ export const roundData = {
   createRound,
   getTournamentRounds,
   getRound,
+  findRound,
 };

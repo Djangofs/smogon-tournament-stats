@@ -1,4 +1,5 @@
 import { roundData } from './round.data';
+import logger from '../../utils/logger';
 
 export const createRound = async ({
   tournamentId,
@@ -7,6 +8,13 @@ export const createRound = async ({
   tournamentId: string;
   name: string;
 }) => {
+  const existingRound = await roundData.findRound({ tournamentId, name });
+
+  if (existingRound) {
+    logger.info(`Round ${name} already exists in tournament ${tournamentId}`);
+    return existingRound;
+  }
+
   return roundData.createRound({ tournamentId, name });
 };
 

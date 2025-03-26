@@ -3,6 +3,23 @@ import { tournamentsData } from './tournaments.data';
 import { TournamentDatabase } from './tournaments.model';
 import { createPlayer, createTournamentPlayer } from '../player/player.service';
 import { createTeam, createTournamentTeam } from '../team/team.service';
+import { roundData } from '../round/round.data';
+import { createMatch, createPlayerMatch } from '../match/match.service';
+
+interface MatchData {
+  roundIndex: number;
+  opponent: string;
+  result: 'W' | 'L';
+  tier: string;
+  roundName: string;
+}
+
+interface PlayerData {
+  player: string;
+  team: string;
+  price: string;
+  matches: MatchData[];
+}
 
 export const getAllTournaments = async (): Promise<TournamentDatabase[]> => {
   return tournamentsData.getAllTournaments();
@@ -47,8 +64,60 @@ export const createTournament = async ({
   );
   const teamIndex = data[0].findIndex((cell: string) => cell.includes('Team'));
 
+  // Create rounds from the spreadsheet data
+  const roundIndices = data[0]
+    .map((cell: string, index: number) => {
+      if (
+        cell.includes('Week') ||
+        cell.includes('Semis') ||
+        cell.includes('Finals')
+      ) {
+        return index;
+      }
+      return -1;
+    })
+    .filter((index) => index !== -1);
+
+  const betterData: PlayerData[] = data.slice(1).map((row: string[]) => {
+    const player = row[playerIndex];
+    let team = row[teamIndex];
+    // TODO: Add second team record for players who were traded
+    if (team.includes('/')) {
+      team = team.split('/')[0].trim();
+    }
+    const price = row[priceIndex];
+
+    // Get all match data from round columns
+    const matches = roundIndices
+      .map((roundIndex) => {
+        const matchData = row[roundIndex];
+        if (!matchData) return null;
+
+        // Parse match data (e.g., "vs. reiku (W) ORAS OU")
+        const matchParts = matchData.match(/vs\. (.*?) \((W|L)\) (.*)/);
+        if (!matchParts) return null;
+
+        const [, opponent, result, tier] = matchParts;
+        return {
+          roundIndex,
+          opponent,
+          result: result as 'W' | 'L',
+          tier,
+          roundName: data[0][roundIndex],
+        };
+      })
+      .filter((match): match is MatchData => match !== null);
+
+    return {
+      player,
+      team,
+      price,
+      matches,
+    };
+  });
+
   // Make any new teams
-  const teams = data.slice(1).map((row: string[]) => row[teamIndex]);
+  const teams = betterData.map((row) => row.team);
   const uniqueTeams = [...new Set(teams)].filter((team) => !team.includes('/'));
   const teamPromises = uniqueTeams.map((team) => createTeam({ name: team }));
   const createdTeams = await Promise.all(teamPromises);
@@ -59,30 +128,6 @@ export const createTournament = async ({
     createTournamentTeam({ tournamentId, teamId: team.id })
   );
   const tournamentTeams = await Promise.all(tournamentTeamPromises);
-
-  const betterData = data.slice(1).map((row: string[]) => {
-    const player = row[playerIndex];
-    let team = row[teamIndex];
-    // TODO: Add second team record for players who were traded
-    if (team.includes('/')) {
-      team = team.split('/')[0].trim();
-    }
-    const price = row[priceIndex];
-    // const tiers = row[0].split(' / ');
-    // const record = row[0].split(' - ');
-    // const wins = record[0];
-    // const losses = record[1];
-    // const weeks = row.slice(1, 10);
-    // const semis = row[10];
-    // const finals = row[11];
-    // const semisTiebreak = row[12];
-    // const finalsTiebreak = row[13];
-    return {
-      player,
-      team,
-      price,
-    };
-  });
 
   // Make any new players
   const players = betterData.map((row) => row.player);
@@ -110,190 +155,61 @@ export const createTournament = async ({
 
   const tournamentPlayers = await Promise.all(tournamentPlayerPromises);
 
-  // Create the rounds
+  // Create rounds and matches
+  for (const roundIndex of roundIndices) {
+    const roundName = data[0][roundIndex];
+    const round = await roundData.createRound({
+      tournamentId: tournament.id,
+      name: roundName,
+    });
 
-  // Get all players and add any which are new
-  // Get and then add all the matches
+    // Create matches for this round
+    const matchPromises = betterData.map(async (row) => {
+      const match = row.matches.find((m) => m.roundIndex === roundIndex);
+      if (!match) return null;
 
-  // Overall Ciele sheet:
-  //   [
-  //     "Player:",
-  //     "Team:",
-  //     "Cost:",
-  //     "Tier(s):",
-  //     "Wins:",
-  //     "Losses:",
-  //     "Week 1:",
-  //     "Week 2:",
-  //     "Week 3:",
-  //     "Week 4:",
-  //     "Week 5:",
-  //     "Week 6:",
-  //     "Week 7:",
-  //     "Week 8:",
-  //     "Week 9:",
-  //     "Semis:",
-  //     "Finals:",
-  //     "Tiebreak (Semis):",
-  //     "Tiebreak (Final):"
-  // ],
+      // Find the opponent's tournament player record
+      const opponentPlayer = tournamentPlayers.find(
+        (tp) =>
+          tp.playerId ===
+          createdPlayers.find((p) => p.name === match.opponent)?.id
+      );
+      if (!opponentPlayer) return null;
 
-  //   [
-  //     "blunder", // Player
-  //     "Tyrants", // Team
-  //     "25500", // Price
-  //     "USM / ORAS OU", // Tier
-  //     "9", // W
-  //     "3", // L
-  //     "vs. reiku (W)",
-  //     "vs. Hiye (W)",
-  //     "vs. ABR (L)",
-  //     "vs. Cdumas (W)",
-  //     "vs. Kickasser (W)",
-  //     "vs. The Hallows (W)",
-  //     "vs. High Impulse (W)",
-  //     "vs. Will of Fire (W)",
-  //     "vs. insult (W)",
-  //     "vs. Charmflash (W)",
-  //     "vs. Empo (L)",
-  //     "",
-  //     "vs. lax (L)"
-  // ],
+      // Find current player's tournament player record
+      const currentPlayer = tournamentPlayers.find(
+        (tp) =>
+          tp.playerId === createdPlayers.find((p) => p.name === row.player)?.id
+      );
 
-  // SPL XV sheet format:
-  //   [
-  //     "",
-  //     "",
-  //     "Rank",
-  //     "Spr.",
-  //     "Player",
-  //     "",
-  //     "Team",
-  //     "Cost",
-  //     "Tier(s)",
-  //     "Record",
-  //     "",
-  //     "Week 1",
-  //     "",
-  //     "",
-  //     "",
-  //     "Week 2",
-  //     "",
-  //     "",
-  //     "",
-  //     "Week 3",
-  //     "",
-  //     "",
-  //     "",
-  //     "Week 4",
-  //     "",
-  //     "",
-  //     "",
-  //     "Week 5",
-  //     "",
-  //     "",
-  //     "",
-  //     "Week 6",
-  //     "",
-  //     "",
-  //     "",
-  //     "Week 7",
-  //     "",
-  //     "",
-  //     "",
-  //     "Week 8",
-  //     "",
-  //     "",
-  //     "",
-  //     "Week 9",
-  //     "",
-  //     "",
-  //     "",
-  //     "Semi Finals",
-  //     "",
-  //     "",
-  //     "",
-  //     "Semi Finals Tiebreak",
-  //     "",
-  //     "",
-  //     "",
-  //     "Finals",
-  //     "",
-  //     "",
-  //     "",
-  //     "Finals Tiebreak"
-  // ],
-  // [],
-  // [],
-  // [
-  //     "",
-  //     "",
-  //     "#1",
-  //     "",
-  //     "484704",
-  //     "hellom",
-  //     "Scooters",
-  //     "6000",
-  //     " SV ",
-  //     "10 - 1",
-  //     "999.1666667",
-  //     "W",
-  //     "vs. JustFranco",
-  //     "SV",
-  //     "",
-  //     "W",
-  //     "vs. Fogbound Lake",
-  //     "SV",
-  //     "",
-  //     "W",
-  //     "vs. lax",
-  //     "SV",
-  //     "",
-  //     "W",
-  //     "vs. Trosko",
-  //     "SV",
-  //     "",
-  //     "W",
-  //     "vs. DonSalvatore",
-  //     "SV",
-  //     "",
-  //     "W",
-  //     "vs. crying",
-  //     "SV",
-  //     "",
-  //     "W",
-  //     "vs. mncmt",
-  //     "SV",
-  //     "",
-  //     "W",
-  //     "vs. Floss",
-  //     "SV",
-  //     "",
-  //     "W",
-  //     "vs. entrocefalo",
-  //     "SV",
-  //     "",
-  //     "W",
-  //     "vs. Storm Zone",
-  //     "SV",
-  //     "",
-  //     "L",
-  //     "vs. Trosko",
-  //     "SV",
-  //     "",
-  //     "",
-  //     "",
-  //     "",
-  //     "",
-  //     "",
-  //     "",
-  //     "",
-  //     "",
-  //     "",
-  //     "Ruiners"
-  // ],
+      // Create the match
+      const newMatch = await createMatch({
+        roundId: round.id,
+        bestOf: 1, // Default to best of 1 for now
+        player1Id: currentPlayer.playerId,
+        player2Id: opponentPlayer.playerId,
+      });
 
-  return sheetsData;
+      // Create player match records
+      await createPlayerMatch({
+        playerId: currentPlayer.playerId,
+        matchId: newMatch.id,
+        tournament_teamId: currentPlayer.tournament_teamId,
+        winner: match.result === 'W',
+      });
 
-  return tournamentsData.createTournament({ name });
+      await createPlayerMatch({
+        playerId: opponentPlayer.playerId,
+        matchId: newMatch.id,
+        tournament_teamId: opponentPlayer.tournament_teamId,
+        winner: match.result === 'L',
+      });
+
+      return newMatch;
+    });
+
+    await Promise.all(matchPromises.filter(Boolean));
+  }
+
+  return tournament;
 };

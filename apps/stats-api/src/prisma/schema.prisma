@@ -16,4 +16,86 @@ datasource db {
 model Tournament {
   id      String @db.Uuid @id @default(uuid())
   name    String
+  rounds  Round[]
+  rosters Tournament_Team[]
+}
+
+model Team {
+  id      String @db.Uuid @id @default(uuid())
+  name    String
+  tournaments Tournament_Team[]
+}
+
+model Round {
+  id           String @db.Uuid @id @default(uuid())
+  tournamentId String @db.Uuid
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  matches      Match[]
+  name         String 
+}
+
+model Match {
+  id           String @db.Uuid @id @default(uuid())
+  players      Player_Match[]
+  roundId      String @db.Uuid
+  round        Round @relation(fields: [roundId], references: [id])
+  bestOf       Int
+  games        Game[]
+}
+
+model Game {
+  id      String @db.Uuid @id @default(uuid())
+  matchId String @db.Uuid
+  match   Match @relation(fields: [matchId], references: [id])
+  players Player_Game[]
+  replayUrl String?
+}
+
+model Player {
+  id      String @db.Uuid @id @default(uuid())
+  name    String
+  matches Player_Match[]
+  games   Player_Game[]
+  tournaments Tournament_Player[]
+}
+
+model Tournament_Team {
+  tournamentId String @db.Uuid
+  teamId       String @db.Uuid
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  team         Team @relation(fields: [teamId], references: [id])
+  id           String @db.Uuid @id @default(uuid())
+  players      Tournament_Player[]
+  matches      Player_Match[]
+
+}
+
+model Tournament_Player {
+  playerId     String @db.Uuid
+  player       Player @relation(fields: [playerId], references: [id])
+  id           String @db.Uuid @id @default(uuid())
+  tournament_teamId String @db.Uuid
+  tournament_team Tournament_Team @relation(fields: [tournament_teamId], references: [id])
+  price        Int
+}
+
+
+model Player_Match {
+  playerId String @db.Uuid
+  matchId  String @db.Uuid
+  tournament_teamId   String @db.Uuid
+  player   Player @relation(fields: [playerId], references: [id])
+  match    Match  @relation(fields: [matchId], references: [id])
+  team     Tournament_Team @relation(fields: [tournament_teamId], references: [id])
+  winner   Boolean
+  @@id([playerId, matchId])
+}
+
+model Player_Game {
+  playerId String @db.Uuid
+  gameId   String @db.Uuid
+  player   Player @relation(fields: [playerId], references: [id])
+  game     Game @relation(fields: [gameId], references: [id])
+  winner   Boolean
+  @@id([playerId, gameId])
 }

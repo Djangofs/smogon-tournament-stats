@@ -18,12 +18,16 @@ app.get('/api', (req, res) => {
   res.send({ message: 'Welcome to stats-api!' });
 });
 
-app.get('/tournaments', (req, res) => {
+app.get('/tournaments', async (req, res) => {
   return getAllTournamentsRoute(req, res);
 });
 
-app.post('/tournament', (req, res) => {
-  return createTournamentRoute(req, res);
+app.post('/tournament', async (req, res, next) => {
+  try {
+    await createTournamentRoute(req, res);
+  } catch (err) {
+    next(err);
+  }
 });
 
 const port = process.env.PORT || 3333;

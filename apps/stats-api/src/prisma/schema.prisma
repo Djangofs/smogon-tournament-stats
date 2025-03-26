@@ -69,6 +69,7 @@ model Player {
   matches      Player_Match[]
   games        Player_Game[]
   tournaments  Tournament_Player[]
+  aliases      PlayerAlias[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -118,4 +119,16 @@ model Player_Game {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   @@id([playerId, gameId])
+}
+
+model PlayerAlias {
+  id        String @db.Uuid @id @default(uuid())
+  playerId  String @db.Uuid
+  player    Player @relation(fields: [playerId], references: [id])
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name])
+  @@index([playerId])
 }

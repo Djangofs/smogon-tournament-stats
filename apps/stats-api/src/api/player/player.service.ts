@@ -83,3 +83,41 @@ export const createTournamentPlayer = async ({
     price,
   });
 };
+
+export const linkPlayerRecords = async ({
+  oldName,
+  newName,
+}: {
+  oldName: string;
+  newName: string;
+}): Promise<PlayerRecord> => {
+  // Find both players
+  const oldPlayer = await playerData.findPlayerByName({ name: oldName });
+  const newPlayer = await playerData.findPlayerByName({ name: newName });
+
+  if (!oldPlayer || !newPlayer) {
+    throw new Error('Both players must exist to link records');
+  }
+
+  if (oldPlayer.id === newPlayer.id) {
+    logger.info(
+      `Players ${oldName} and ${newName} are already the same record`
+    );
+    return {
+      id: oldPlayer.id,
+      name: oldPlayer.currentName,
+    };
+  }
+
+  // Link the records by creating an alias and updating the current name
+  await playerData.updatePlayerName({
+    playerId: oldPlayer.id,
+    newName: newPlayer.currentName,
+  });
+
+  logger.info(`Linked player records: ${oldName} -> ${newPlayer.currentName}`);
+  return {
+    id: oldPlayer.id,
+    name: newPlayer.currentName,
+  };
+};

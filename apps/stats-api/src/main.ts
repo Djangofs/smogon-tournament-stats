@@ -7,7 +7,10 @@ import {
   getAllTournamentsRoute,
   createTournamentRoute,
 } from './api/tournaments/tournaments.route';
-import { getAllPlayersRoute } from './api/player/player.route';
+import {
+  getAllPlayersRoute,
+  linkPlayerRecordsRoute,
+} from './api/player/player.route';
 import logger from './utils/logger';
 
 const app = express();
@@ -34,6 +37,10 @@ app.post('/tournament', async (req, res, next) => {
 
 app.get('/players', async (req, res) => {
   return getAllPlayersRoute(req, res);
+});
+
+app.post('/players/link', async (req, res) => {
+  return linkPlayerRecordsRoute(req, res);
 });
 
 const port = process.env.PORT || 3333;

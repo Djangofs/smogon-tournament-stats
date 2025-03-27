@@ -394,10 +394,6 @@ export const extractTournamentData = async ({
     return duplicateIndex === index;
   });
 
-  console.log(uniqueMatches);
-
-  return;
-
   return {
     players: playerData,
     teams,

@@ -111,20 +111,34 @@ const findMatch = async ({
   const matches = await client.match.findMany({
     where: {
       roundId,
-      players: {
-        every: {
-          playerId: {
-            in: [player1Id, player2Id],
+      AND: [
+        {
+          players: {
+            some: {
+              playerId: player1Id,
+            },
           },
         },
-      },
+        {
+          players: {
+            some: {
+              playerId: player2Id,
+            },
+          },
+        },
+      ],
     },
     include: {
       players: true,
     },
   });
 
-  return matches[0];
+  // Filter to ensure player1 and player2 are in the correct positions
+  return matches.find((match) => {
+    const player1Match = match.players.find((p) => p.playerId === player1Id);
+    const player2Match = match.players.find((p) => p.playerId === player2Id);
+    return player1Match && player2Match;
+  });
 };
 
 export const matchData = {

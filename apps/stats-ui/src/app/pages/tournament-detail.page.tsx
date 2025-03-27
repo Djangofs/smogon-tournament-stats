@@ -34,28 +34,81 @@ const Label = styled.span`
 
 const RoundsList = styled.div`
   display: grid;
-  gap: 1rem;
+  gap: 2rem;
 `;
 
 const RoundCard = styled(Card)`
   padding: 1rem;
 `;
 
-const RoundTitle = styled(TournamentTitle)`
+const StyledTournamentTitle = styled(TournamentTitle)`
+  text-align: center;
+`;
+
+const StyledTournamentMeta = styled(TournamentMeta)`
+  text-align: center;
+`;
+
+const RoundTitle = styled.div`
   margin: 0 0 1rem 0;
   font-size: 1.25rem;
+  text-align: center;
 `;
 
 const MatchesList = styled.div`
   display: grid;
-  gap: 0.5rem;
+  gap: 1rem;
+  max-width: 600px;
+  margin: 0 auto;
 `;
 
 const MatchItem = styled(TournamentHighlight)`
   padding: 0.5rem;
-  background: #f5f5f5;
   border-radius: 4px;
   border-bottom: none;
+  text-align: center;
+`;
+
+const TeamSection = styled.div`
+  margin-bottom: 1rem;
+  text-align: center;
+`;
+
+const TeamTitle = styled.div`
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+  text-align: center;
+`;
+
+const Winner = styled.span`
+  font-weight: 600;
+  color: #0066cc;
+`;
+
+const TeamMatchup = styled.div`
+  margin-bottom: 1.5rem;
+  text-align: center;
+`;
+
+const BoldText = styled.span`
+  font-weight: 600;
+`;
+
+const TeamMatchupTitle = styled.div`
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #333;
+  text-align: center;
+`;
+
+const MatchTitle = styled.div`
+  text-align: center;
+  margin-bottom: 0.5rem;
+`;
+
+const MatchResult = styled.div`
+  text-align: center;
 `;
 
 export function TournamentDetailPage() {
@@ -76,14 +129,14 @@ export function TournamentDetailPage() {
         <PageTitle>{tournament.name}</PageTitle>
         <div>
           {tournament.isOfficial && (
-            <TournamentMeta>
+            <StyledTournamentMeta>
               <span>Official</span>
-            </TournamentMeta>
+            </StyledTournamentMeta>
           )}
           {tournament.isTeam && (
-            <TournamentMeta>
+            <StyledTournamentMeta>
               <span>Team</span>
-            </TournamentMeta>
+            </StyledTournamentMeta>
           )}
         </div>
       </Header>
@@ -100,24 +153,142 @@ export function TournamentDetailPage() {
       </TournamentInfo>
 
       <RoundsList>
-        {tournament.rounds?.map((round) => (
-          <RoundCard key={round.id}>
-            <RoundTitle>{round.name}</RoundTitle>
-            <MatchesList>
-              {round.matches?.map((match) => (
-                <MatchItem key={match.id}>
-                  <TournamentTitle>
-                    {match.players[0]?.player.name} vs{' '}
-                    {match.players[1]?.player.name}
-                  </TournamentTitle>
-                  <TournamentMeta>
-                    <span>{match.result}</span>
-                  </TournamentMeta>
-                </MatchItem>
-              ))}
-            </MatchesList>
-          </RoundCard>
-        ))}
+        {tournament.rounds?.map((round) => {
+          // Group matches by team matchups
+          const teamMatchups = round.matches?.reduce(
+            (acc, match) => {
+              const team1 = match.players[0]?.team;
+              const team2 = match.players[1]?.team;
+
+              if (!team1?.id || !team2?.id) return acc;
+
+              // Create a unique key for this team matchup
+              const matchupKey = [team1.id, team2.id].sort().join('-');
+
+              if (!acc[matchupKey]) {
+                acc[matchupKey] = {
+                  team1: {
+                    id: team1.id,
+                    name: team1.team.name,
+                    wins: 0,
+                  },
+                  team2: {
+                    id: team2.id,
+                    name: team2.team.name,
+                    wins: 0,
+                  },
+                  matches: [],
+                };
+              }
+
+              acc[matchupKey].matches.push(match);
+              return acc;
+            },
+            {} as Record<
+              string,
+              {
+                team1: { id: string; name: string; wins: number };
+                team2: { id: string; name: string; wins: number };
+                matches: typeof round.matches;
+              }
+            >
+          );
+
+          return (
+            <RoundCard key={round.id}>
+              <RoundTitle>
+                <StyledTournamentTitle>{round.name}</StyledTournamentTitle>
+              </RoundTitle>
+              <MatchesList>
+                {Object.values(teamMatchups || {}).map((matchup) => {
+                  // Calculate wins for each team
+                  matchup.team1.wins = matchup.matches.filter((match) => {
+                    const team1Player = match.players.find(
+                      (p) => p.team.id === matchup.team1.id
+                    );
+                    return team1Player?.winner;
+                  }).length;
+
+                  matchup.team2.wins = matchup.matches.filter((match) => {
+                    const team2Player = match.players.find(
+                      (p) => p.team.id === matchup.team2.id
+                    );
+                    return team2Player?.winner;
+                  }).length;
+
+                  const isTeam1Winning =
+                    matchup.team1.wins > matchup.team2.wins;
+                  const isTeam2Winning =
+                    matchup.team2.wins > matchup.team1.wins;
+                  const isTie = matchup.team1.wins === matchup.team2.wins;
+
+                  return (
+                    <TeamMatchup
+                      key={`${matchup.team1.id}-${matchup.team2.id}`}
+                    >
+                      <TeamMatchupTitle>
+                        <StyledTournamentTitle>
+                          {isTeam1Winning ? (
+                            <BoldText>
+                              {matchup.team1.name} ({matchup.team1.wins})
+                            </BoldText>
+                          ) : (
+                            `${matchup.team1.name} (${matchup.team1.wins})`
+                          )}{' '}
+                          {isTie ? <BoldText>vs</BoldText> : 'vs'}{' '}
+                          {isTeam2Winning ? (
+                            <BoldText>
+                              {matchup.team2.name} ({matchup.team2.wins})
+                            </BoldText>
+                          ) : (
+                            `${matchup.team2.name} (${matchup.team2.wins})`
+                          )}
+                        </StyledTournamentTitle>
+                      </TeamMatchupTitle>
+                      {matchup.matches.map((match) => {
+                        // Sort players so team1's player is always first
+                        const sortedPlayers = [...match.players].sort(
+                          (a, b) => {
+                            if (a.team.id === matchup.team1.id) return -1;
+                            if (b.team.id === matchup.team1.id) return 1;
+                            return 0;
+                          }
+                        );
+
+                        const player1 = sortedPlayers[0];
+                        const player2 = sortedPlayers[1];
+
+                        // Determine if the first player (team1's player) won
+                        const isPlayer1Winner = player1?.winner;
+
+                        return (
+                          <MatchItem key={match.id}>
+                            <MatchTitle>
+                              {isPlayer1Winner ? (
+                                <Winner>{player1?.player.name}</Winner>
+                              ) : (
+                                player1?.player.name
+                              )}{' '}
+                              vs{' '}
+                              {!isPlayer1Winner ? (
+                                <Winner>{player2?.player.name}</Winner>
+                              ) : (
+                                player2?.player.name
+                              )}
+                            </MatchTitle>
+                            <MatchResult>
+                              <span>{match.result}</span>
+                            </MatchResult>
+                          </MatchItem>
+                        );
+                      })}
+                    </TeamMatchup>
+                  );
+                })}
+              </MatchesList>
+            </RoundCard>
+          );
+        })}
       </RoundsList>
     </Container>
   );

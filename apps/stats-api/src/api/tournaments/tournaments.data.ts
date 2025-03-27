@@ -23,6 +23,11 @@ const getTournamentById = async (id: string) => {
               players: {
                 include: {
                   player: true,
+                  team: {
+                    include: {
+                      team: true,
+                    },
+                  },
                 },
               },
             },

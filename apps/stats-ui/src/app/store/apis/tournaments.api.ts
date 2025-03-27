@@ -17,6 +17,18 @@ export interface Player {
   name: string;
 }
 
+export interface Team {
+  id: string;
+  name: string;
+}
+
+export interface TournamentTeam {
+  id: string;
+  tournamentId: string;
+  teamId: string;
+  team: Team;
+}
+
 export interface PlayerMatch {
   playerId: string;
   matchId: string;
@@ -25,7 +37,9 @@ export interface PlayerMatch {
   createdAt: string;
   updatedAt: string;
   player: Player;
+  team: TournamentTeam;
 }
+
 export interface Round {
   id: string;
   name: string;

@@ -20,6 +20,7 @@ model Tournament {
   rosters   Tournament_Team[]
   isOfficial Boolean @default(false)
   isTeam     Boolean @default(false)
+  year      Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -51,6 +52,7 @@ model Match {
   games        Game[]
   generation   String
   tier         String
+  playedAt     DateTime? @default(dbgenerated("(date_trunc('year', CURRENT_DATE))::timestamp"))
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -63,6 +65,7 @@ model Game {
   replayUrl  String?
   generation String
   tier       String
+  playedAt   DateTime? @default(dbgenerated("(date_trunc('year', CURRENT_DATE))::timestamp"))
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }

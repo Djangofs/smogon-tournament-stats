@@ -42,13 +42,15 @@ const createTournament = async ({
   name,
   isOfficial,
   isTeam,
+  year,
 }: {
   name: string;
   isOfficial: boolean;
   isTeam: boolean;
+  year: number;
 }) => {
   return client.tournament.create({
-    data: { name, isOfficial, isTeam },
+    data: { name, isOfficial, isTeam, year },
   });
 };
 

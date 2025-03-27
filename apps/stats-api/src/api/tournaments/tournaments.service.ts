@@ -112,12 +112,14 @@ export const createTournament = async ({
   sheetId,
   isOfficial,
   isTeam,
+  year,
 }: {
   name: string;
   sheetName: string;
   sheetId: string;
   isOfficial: boolean;
   isTeam: boolean;
+  year: number;
 }) => {
   let tournament: TournamentDatabase;
   const existingTournament = await tournamentsData.findTournament({ name });
@@ -129,6 +131,7 @@ export const createTournament = async ({
       name,
       isOfficial,
       isTeam,
+      year,
     });
   }
 

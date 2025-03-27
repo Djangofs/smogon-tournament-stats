@@ -35,7 +35,7 @@ export const tournamentsController = {
 
   createTournament: async (req: Request, res: Response) => {
     try {
-      const { name, sheetName, sheetId, isOfficial, isTeam } =
+      const { name, sheetName, sheetId, isOfficial, isTeam, year } =
         req.body as CreateTournamentRequest;
       const tournament = await createTournament({
         name,
@@ -43,6 +43,7 @@ export const tournamentsController = {
         sheetId,
         isOfficial,
         isTeam,
+        year,
       });
       res.status(201).json(tournament);
     } catch (error) {

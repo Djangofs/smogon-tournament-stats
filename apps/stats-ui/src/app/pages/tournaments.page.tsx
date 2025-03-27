@@ -14,7 +14,7 @@ import {
 import { Button } from '../components/button/button';
 import { PageTitle } from '../components/typography/page-title';
 import styled from 'styled-components';
-import { Tournament } from '../store/apis/tournaments.api';
+import { Tournament } from '../types/tournament';
 
 const Header = styled.div`
   display: flex;
@@ -59,6 +59,7 @@ export function TournamentsPage() {
     sheetId: string;
     isOfficial: boolean;
     isTeam: boolean;
+    year: number;
   }) => {
     try {
       await createTournament(data).unwrap();

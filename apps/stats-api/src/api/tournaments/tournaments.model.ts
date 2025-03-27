@@ -8,6 +8,7 @@ export interface CreateTournamentRequest {
   sheetId: string;
   isOfficial?: boolean;
   isTeam?: boolean;
+  year: number;
 }
 
 export interface TournamentDTO {
@@ -15,6 +16,7 @@ export interface TournamentDTO {
   name: string;
   isOfficial: boolean;
   isTeam: boolean;
+  year: number;
   createdAt: Date;
   updatedAt: Date;
 }

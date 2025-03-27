@@ -148,6 +148,7 @@ interface ModalProps {
     sheetId: string;
     isOfficial: boolean;
     isTeam: boolean;
+    year: number;
   }) => void;
   isLoading?: boolean;
 }
@@ -169,6 +170,7 @@ export function Modal({
       sheetId: formData.get('sheetId') as string,
       isOfficial: formData.get('isOfficial') === 'true',
       isTeam: formData.get('isTeam') === 'true',
+      year: parseInt(formData.get('year') as string),
     });
   };
 
@@ -190,6 +192,19 @@ export function Modal({
               name="name"
               required
               placeholder="e.g., Smogon Tour 35"
+              disabled={isLoading}
+            />
+          </FormGroup>
+          <FormGroup>
+            <StyledLabel htmlFor="year">Year</StyledLabel>
+            <StyledInput
+              type="number"
+              id="year"
+              name="year"
+              required
+              min="2000"
+              max="2100"
+              placeholder="e.g., 2024"
               disabled={isLoading}
             />
           </FormGroup>

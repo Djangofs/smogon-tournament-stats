@@ -11,6 +11,7 @@ export interface Tournament {
   name: string;
   isOfficial: boolean;
   isTeam: boolean;
+  year: number;
   createdAt: string;
   updatedAt: string;
   rounds?: Round[];
@@ -22,4 +23,5 @@ export interface CreateTournamentRequest {
   sheetId: string;
   isOfficial?: boolean;
   isTeam?: boolean;
+  year: number;
 }

@@ -1,64 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-
+import { Tournament, CreateTournamentRequest } from '../../types/tournament';
 import { environment } from '../../../environments/environment';
-
-export interface Tournament {
-  id: string;
-  name: string;
-  isOfficial: boolean;
-  isTeam: boolean;
-  createdAt: string;
-  updatedAt: string;
-  rounds?: Round[];
-}
-
-export interface Player {
-  id: string;
-  name: string;
-}
-
-export interface Team {
-  id: string;
-  name: string;
-}
-
-export interface TournamentTeam {
-  id: string;
-  tournamentId: string;
-  teamId: string;
-  team: Team;
-}
-
-export interface PlayerMatch {
-  playerId: string;
-  matchId: string;
-  tournament_teamId: string;
-  winner: boolean;
-  createdAt: string;
-  updatedAt: string;
-  player: Player;
-  team: TournamentTeam;
-}
-
-export interface Round {
-  id: string;
-  name: string;
-  matches?: Match[];
-}
-
-export interface Match {
-  id: string;
-  players: PlayerMatch[];
-  result: string;
-}
-
-export interface CreateTournamentRequest {
-  name: string;
-  sheetName: string;
-  sheetId: string;
-  isOfficial?: boolean;
-  isTeam?: boolean;
-}
 
 // Define a service using a base URL and expected endpoints
 export const tournamentsApi = createApi({

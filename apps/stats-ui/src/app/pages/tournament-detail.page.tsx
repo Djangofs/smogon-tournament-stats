@@ -105,11 +105,33 @@ const TeamMatchupTitle = styled.div`
 const MatchTitle = styled.div`
   text-align: center;
   margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+`;
+
+const MatchFormat = styled.div`
+  color: #666;
+  font-size: 0.9rem;
 `;
 
 const MatchResult = styled.div`
   text-align: center;
 `;
+
+const GENERATION_ORDER = [
+  'SV',
+  'SWSH',
+  'SM',
+  'ORAS',
+  'BW',
+  'DPP',
+  'ADV',
+  'GSC',
+  'RBY',
+] as const;
+const TIER_ORDER = ['OU', 'Uber', 'UU', 'RU', 'NU', 'PU', 'LC'] as const;
 
 export function TournamentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -245,43 +267,67 @@ export function TournamentDetailPage() {
                           )}
                         </StyledTournamentTitle>
                       </TeamMatchupTitle>
-                      {matchup.matches.map((match) => {
-                        // Sort players so team1's player is always first
-                        const sortedPlayers = [...match.players].sort(
-                          (a, b) => {
-                            if (a.team.id === matchup.team1.id) return -1;
-                            if (b.team.id === matchup.team1.id) return 1;
-                            return 0;
+                      {(matchup.matches || [])
+                        .sort((a, b) => {
+                          // First sort by generation
+                          const genAIndex = GENERATION_ORDER.indexOf(
+                            a.generation as (typeof GENERATION_ORDER)[number]
+                          );
+                          const genBIndex = GENERATION_ORDER.indexOf(
+                            b.generation as (typeof GENERATION_ORDER)[number]
+                          );
+                          if (genAIndex !== genBIndex) {
+                            return genAIndex - genBIndex;
                           }
-                        );
+                          // Then sort by tier
+                          const tierAIndex = TIER_ORDER.indexOf(
+                            a.tier as (typeof TIER_ORDER)[number]
+                          );
+                          const tierBIndex = TIER_ORDER.indexOf(
+                            b.tier as (typeof TIER_ORDER)[number]
+                          );
+                          return tierAIndex - tierBIndex;
+                        })
+                        .map((match) => {
+                          // Sort players so team1's player is always first
+                          const sortedPlayers = [...match.players].sort(
+                            (a, b) => {
+                              if (a.team.id === matchup.team1.id) return -1;
+                              if (b.team.id === matchup.team1.id) return 1;
+                              return 0;
+                            }
+                          );
 
-                        const player1 = sortedPlayers[0];
-                        const player2 = sortedPlayers[1];
+                          const player1 = sortedPlayers[0];
+                          const player2 = sortedPlayers[1];
 
-                        // Determine if the first player (team1's player) won
-                        const isPlayer1Winner = player1?.winner;
+                          // Determine if the first player (team1's player) won
+                          const isPlayer1Winner = player1?.winner;
 
-                        return (
-                          <MatchItem key={match.id}>
-                            <MatchTitle>
-                              {isPlayer1Winner ? (
-                                <Winner>{player1?.player.name}</Winner>
-                              ) : (
-                                player1?.player.name
-                              )}{' '}
-                              vs{' '}
-                              {!isPlayer1Winner ? (
-                                <Winner>{player2?.player.name}</Winner>
-                              ) : (
-                                player2?.player.name
-                              )}
-                            </MatchTitle>
-                            <MatchResult>
-                              <span>{match.result}</span>
-                            </MatchResult>
-                          </MatchItem>
-                        );
-                      })}
+                          return (
+                            <MatchItem key={match.id}>
+                              <MatchTitle>
+                                <MatchFormat>
+                                  {match.generation} {match.tier}:
+                                </MatchFormat>
+                                {isPlayer1Winner ? (
+                                  <Winner>{player1?.player.name}</Winner>
+                                ) : (
+                                  player1?.player.name
+                                )}{' '}
+                                vs{' '}
+                                {!isPlayer1Winner ? (
+                                  <Winner>{player2?.player.name}</Winner>
+                                ) : (
+                                  player2?.player.name
+                                )}
+                              </MatchTitle>
+                              <MatchResult>
+                                <span>{match.result}</span>
+                              </MatchResult>
+                            </MatchItem>
+                          );
+                        })}
                     </TeamMatchup>
                   );
                 })}

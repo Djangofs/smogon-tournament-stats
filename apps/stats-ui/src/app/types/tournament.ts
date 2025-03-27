@@ -1,9 +1,25 @@
+import { Match } from './match';
+
+export interface Round {
+  id: string;
+  name: string;
+  matches?: Match[];
+}
+
 export interface Tournament {
   id: string;
   name: string;
-  format: string;
-  startDate: string;
-  endDate: string;
-  status: string;
-  playerCount: number;
+  isOfficial: boolean;
+  isTeam: boolean;
+  createdAt: string;
+  updatedAt: string;
+  rounds?: Round[];
+}
+
+export interface CreateTournamentRequest {
+  name: string;
+  sheetName: string;
+  sheetId: string;
+  isOfficial?: boolean;
+  isTeam?: boolean;
 }

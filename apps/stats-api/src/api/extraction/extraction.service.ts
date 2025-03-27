@@ -1,5 +1,11 @@
 import { google } from 'googleapis';
 import logger from '../../utils/logger';
+import {
+  GENERATIONS,
+  Generation,
+  normalizeGeneration,
+  parseFormat,
+} from '@smogon-tournament-stats/shared-constants';
 
 export interface MatchData {
   roundIndex: number;
@@ -40,66 +46,14 @@ export interface TournamentData {
   matches: MatchData[];
 }
 
-export type Generation =
-  | 'RBY'
-  | 'GSC'
-  | 'ADV'
-  | 'DPP'
-  | 'BW'
-  | 'ORAS'
-  | 'SM'
-  | 'SWSH'
-  | 'SV';
-export type Tier = 'OU' | 'Uber' | 'UU' | 'RU' | 'NU' | 'PU' | 'LC';
-export type Format = `${Generation} ${Tier}`;
-
-const normalizeGeneration = (gen: string): Generation => {
-  const genMap: Record<string, Generation> = {
-    RBY: 'RBY',
-    GSC: 'GSC',
-    ADV: 'ADV',
-    DPP: 'DPP',
-    BW: 'BW',
-    BW2: 'BW',
-    XY: 'ORAS',
-    ORAS: 'ORAS',
-    SM: 'SM',
-    USM: 'SM',
-    SWSH: 'SWSH',
-    SV: 'SV',
-  };
-  return genMap[gen] || 'SV'; // Default to latest gen if unknown
-};
-
-const normalizeTier = (tier: string): Tier => {
-  const tierMap: Record<string, Tier> = {
-    OU: 'OU',
-    Uber: 'Uber',
-    Ubers: 'Uber',
-    UU: 'UU',
-    RU: 'RU',
-    NU: 'NU',
-    PU: 'PU',
-    LC: 'LC',
-  };
-  return tierMap[tier] || 'OU'; // Default to OU if unknown
-};
-
 const findMostCommonGeneration = (
   data: string[][],
   tierIndex: number
 ): Generation => {
-  const genCounts: Record<Generation, number> = {
-    RBY: 0,
-    GSC: 0,
-    ADV: 0,
-    DPP: 0,
-    BW: 0,
-    ORAS: 0,
-    SM: 0,
-    SWSH: 0,
-    SV: 0,
-  };
+  const genCounts: Record<Generation, number> = GENERATIONS.reduce(
+    (acc, gen) => ({ ...acc, [gen]: 0 }),
+    {} as Record<Generation, number>
+  );
 
   // Count generations in the tiers column
   data.forEach((row) => {
@@ -115,7 +69,7 @@ const findMostCommonGeneration = (
 
   // Find the most common generation
   let maxCount = 0;
-  let defaultGen: Generation = 'SV';
+  let defaultGen: Generation = GENERATIONS[0];
 
   Object.entries(genCounts).forEach(([gen, count]) => {
     if (count > maxCount) {
@@ -125,41 +79,6 @@ const findMostCommonGeneration = (
   });
 
   return defaultGen;
-};
-
-const parseFormat = (formatStr: string, defaultGen: Generation): Format => {
-  if (!formatStr) return `${defaultGen} OU`; // Use tournament's default gen if no format
-
-  // Split by space and handle various formats
-  const parts = formatStr.trim().split(/\s+/);
-
-  if (parts.length === 1) {
-    // If only one part, check if it's a generation or tier
-    const part = parts[0];
-    const normalizedGen = normalizeGeneration(part);
-    const normalizedTier = normalizeTier(part);
-
-    // If the part matches a generation (after normalization), use it with default tier
-    if (normalizedGen !== defaultGen || part === defaultGen) {
-      return `${normalizedGen} OU`;
-    }
-
-    // If the part matches a tier (after normalization), use it with tournament's default gen
-    if (normalizedTier !== 'OU' || part === 'OU') {
-      return `${defaultGen} ${normalizedTier}`;
-    }
-
-    // If we can't determine if it's a gen or tier, use tournament's defaults
-    return `${defaultGen} OU`;
-  }
-
-  if (parts.length === 2) {
-    // If two parts, assume it's "Gen Tier"
-    return `${normalizeGeneration(parts[0])} ${normalizeTier(parts[1])}`;
-  }
-
-  // If more parts or unknown format, use tournament's defaults
-  return `${defaultGen} OU`;
 };
 
 const parseMatchData = (

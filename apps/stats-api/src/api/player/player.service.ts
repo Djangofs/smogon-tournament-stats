@@ -13,8 +13,14 @@ interface PlayerRecord {
   name: string;
 }
 
-export const getAllPlayers = async (): Promise<PlayerWithStats[]> => {
-  const players = await playerData.getAllPlayers();
+export const getAllPlayers = async ({
+  generation,
+  tier,
+}: {
+  generation?: string;
+  tier?: string;
+} = {}): Promise<PlayerWithStats[]> => {
+  const players = await playerData.getAllPlayers({ generation, tier });
 
   return players.map((player) => {
     const matchesWon = player.matches.filter((match) => match.winner).length;

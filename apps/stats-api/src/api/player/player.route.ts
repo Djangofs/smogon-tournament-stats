@@ -3,8 +3,19 @@ import { getAllPlayers, linkPlayerRecords } from './player.service';
 import logger from '../../utils/logger';
 
 export const getAllPlayersRoute = async (req: Request, res: Response) => {
-  const players = await getAllPlayers();
-  res.send(players);
+  try {
+    const { generation, tier } = req.query;
+    const players = await getAllPlayers({
+      generation: generation as string | undefined,
+      tier: tier as string | undefined,
+    });
+    res.send(players);
+  } catch (error) {
+    logger.error('Error getting players:', error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to get players',
+    });
+  }
 };
 
 export const linkPlayerRecordsRoute = async (req: Request, res: Response) => {

@@ -8,12 +8,20 @@ export type Player = {
   matchesLost: number;
 };
 
+export type GetPlayersQueryParams = {
+  generation?: string;
+  tier?: string;
+};
+
 export const playersApi = createApi({
   reducerPath: 'playersApi',
   baseQuery: fetchBaseQuery({ baseUrl: environment.apiUrl }),
   endpoints: (builder) => ({
-    getPlayers: builder.query<Player[], void>({
-      query: () => `players`,
+    getPlayers: builder.query<Player[], GetPlayersQueryParams>({
+      query: (params) => ({
+        url: 'players',
+        params,
+      }),
     }),
   }),
 });

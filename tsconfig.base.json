@@ -14,7 +14,11 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@smogon-tournament-stats/shared-constants": [
+        "shared-constants/src/index.ts"
+      ]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

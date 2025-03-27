@@ -8,12 +8,30 @@ interface PlayerRecord {
   name: string;
 }
 
-const getAllPlayers = async () => {
+const getAllPlayers = async ({
+  generation,
+  tier,
+}: {
+  generation?: string;
+  tier?: string;
+} = {}) => {
   return client.player.findMany({
     include: {
       matches: {
+        where: {
+          match: {
+            ...(generation && { generation }),
+            ...(tier && { tier }),
+          },
+        },
         select: {
           winner: true,
+          match: {
+            select: {
+              generation: true,
+              tier: true,
+            },
+          },
         },
       },
     },

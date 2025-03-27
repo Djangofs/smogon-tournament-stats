@@ -3,6 +3,32 @@ import { useGetPlayersQuery } from '../store/apis/players.api';
 import { Container } from '../components/layout/layout';
 import { Table } from '../components/table/table';
 import { PageTitle } from '../components/typography/page-title';
+import styled from 'styled-components';
+import {
+  GENERATIONS,
+  TIERS,
+  Generation,
+  Tier,
+} from '@smogon-tournament-stats/shared-constants';
+
+const FilterContainer = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: center;
+`;
+
+const FilterLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const Select = styled.select`
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+`;
 
 type SortColumn = 'name' | 'matchesWon' | 'matchesLost' | 'winRate';
 type SortDirection = 'asc' | 'desc';
@@ -12,7 +38,17 @@ type FilterValue = {
 };
 
 export function PlayersPage() {
-  const { data: players, isLoading, isError, error } = useGetPlayersQuery();
+  const [generation, setGeneration] = useState<Generation | ''>('');
+  const [tier, setTier] = useState<Tier | ''>('');
+  const {
+    data: players,
+    isLoading,
+    isError,
+    error,
+  } = useGetPlayersQuery({
+    generation: generation || undefined,
+    tier: tier || undefined,
+  });
   const [sortColumn, setSortColumn] = useState<SortColumn>('matchesWon');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [filters, setFilters] = useState<Record<string, FilterValue>>({});
@@ -55,6 +91,14 @@ export function PlayersPage() {
 
   const filteredAndSortedPlayers = [...(players || [])]
     .filter((player) => {
+      // First check if the player has any matches in the selected format
+      if (generation || tier) {
+        if (player.matchesWon + player.matchesLost === 0) {
+          return false;
+        }
+      }
+
+      // Then apply the column filters
       return Object.entries(filters).every(([column, filter]) => {
         if (!filter.operator || !filter.value) return true;
 
@@ -125,6 +169,38 @@ export function PlayersPage() {
     <Container>
       <PageTitle>Players</PageTitle>
       <p>Browse all Smogon tournament players and their statistics</p>
+
+      <FilterContainer>
+        <FilterLabel>
+          Generation:
+          <Select
+            value={generation}
+            onChange={(e) => setGeneration(e.target.value as Generation | '')}
+          >
+            <option value="">All Generations</option>
+            {GENERATIONS.map((gen: Generation) => (
+              <option key={gen} value={gen}>
+                {gen}
+              </option>
+            ))}
+          </Select>
+        </FilterLabel>
+
+        <FilterLabel>
+          Tier:
+          <Select
+            value={tier}
+            onChange={(e) => setTier(e.target.value as Tier | '')}
+          >
+            <option value="">All Tiers</option>
+            {TIERS.map((t: Tier) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </Select>
+        </FilterLabel>
+      </FilterContainer>
 
       <Table
         headers={['Name', 'Matches Won', 'Matches Lost', 'Win Rate']}

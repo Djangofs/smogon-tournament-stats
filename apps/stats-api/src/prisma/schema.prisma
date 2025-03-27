@@ -49,6 +49,8 @@ model Match {
   round        Round @relation(fields: [roundId], references: [id])
   bestOf       Int
   games        Game[]
+  generation   String
+  tier         String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -59,6 +61,8 @@ model Game {
   match      Match @relation(fields: [matchId], references: [id])
   players    Player_Game[]
   replayUrl  String?
+  generation String
+  tier       String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }

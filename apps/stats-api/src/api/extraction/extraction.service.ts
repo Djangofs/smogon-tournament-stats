@@ -6,6 +6,7 @@ export interface MatchData {
   player1: string;
   player2: string;
   winner: 'player1' | 'player2';
+  generation: string;
   tier: string;
   roundName: string;
 }
@@ -193,12 +194,16 @@ const parseMatchData = (
   const formatStr = trimmedData.slice(closeParenIndex + 1).trim();
   const format = parseFormat(formatStr, defaultGen);
 
+  // Split format into generation and tier
+  const [generation, tier] = format.split(' ');
+
   return {
     roundIndex,
     player1: currentPlayer,
     player2,
     winner: result === 'W' ? 'player1' : 'player2',
-    tier: format,
+    generation,
+    tier,
     roundName,
   };
 };

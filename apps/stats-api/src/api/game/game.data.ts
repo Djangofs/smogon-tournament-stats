@@ -4,15 +4,24 @@ const client = new PrismaClient();
 
 const createGame = async ({
   matchId,
-  replayUrl,
+  player1Id,
+  player2Id,
+  player1Winner,
+  generation,
+  tier,
 }: {
   matchId: string;
-  replayUrl?: string;
+  player1Id: string;
+  player2Id: string;
+  player1Winner: boolean;
+  generation: string;
+  tier: string;
 }) => {
   return client.game.create({
     data: {
       matchId,
-      replayUrl,
+      generation,
+      tier,
     },
   });
 };

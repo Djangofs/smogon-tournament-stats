@@ -7,24 +7,37 @@ export const createMatch = async ({
   bestOf,
   player1Id,
   player2Id,
+  generation,
+  tier,
 }: {
   roundId: string;
   bestOf: number;
   player1Id: string;
   player2Id: string;
+  generation: string;
+  tier: string;
 }) => {
-  // Check for existing match between these players in this round
-  const existingMatches = await matchData.getRoundMatches({ roundId });
-  const existingMatch = existingMatches.find((match) => {
-    const matchPlayers = match.players.map((p) => p.playerId);
-    return matchPlayers.includes(player1Id) && matchPlayers.includes(player2Id);
+  const existingMatch = await matchData.findMatch({
+    roundId,
+    player1Id,
+    player2Id,
   });
 
   if (existingMatch) {
+    logger.info(
+      `Match ${player1Id}:${player2Id} in round ${roundId} already exists`
+    );
     return existingMatch;
   }
 
-  return matchData.createMatch({ roundId, bestOf });
+  return matchData.createMatch({
+    roundId,
+    bestOf,
+    player1Id,
+    player2Id,
+    generation,
+    tier,
+  });
 };
 
 export const createPlayerMatch = async ({

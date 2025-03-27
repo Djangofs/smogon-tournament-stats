@@ -5,14 +5,24 @@ const client = new PrismaClient();
 const createMatch = async ({
   roundId,
   bestOf,
+  player1Id,
+  player2Id,
+  generation,
+  tier,
 }: {
   roundId: string;
   bestOf: number;
+  player1Id: string;
+  player2Id: string;
+  generation: string;
+  tier: string;
 }) => {
   return client.match.create({
     data: {
       roundId,
       bestOf,
+      generation,
+      tier,
     },
   });
 };
@@ -89,10 +99,39 @@ const findPlayerMatch = async ({
   });
 };
 
+const findMatch = async ({
+  roundId,
+  player1Id,
+  player2Id,
+}: {
+  roundId: string;
+  player1Id: string;
+  player2Id: string;
+}) => {
+  const matches = await client.match.findMany({
+    where: {
+      roundId,
+      players: {
+        every: {
+          playerId: {
+            in: [player1Id, player2Id],
+          },
+        },
+      },
+    },
+    include: {
+      players: true,
+    },
+  });
+
+  return matches[0];
+};
+
 export const matchData = {
   createMatch,
   createPlayerMatch,
   getRoundMatches,
   getMatch,
   findPlayerMatch,
+  findMatch,
 };

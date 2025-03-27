@@ -103,7 +103,8 @@ const findRoundIndices = (headerRow: string[]): number[] => {
       if (
         cell.includes('Week') ||
         cell.includes('Semis') ||
-        cell.includes('Finals')
+        cell.includes('Final') ||
+        cell.includes('Tiebreak')
       ) {
         return index;
       }

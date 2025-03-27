@@ -11,9 +11,13 @@ interface PlayerRecord {
 const getAllPlayers = async ({
   generation,
   tier,
+  startYear,
+  endYear,
 }: {
   generation?: string;
   tier?: string;
+  startYear?: number;
+  endYear?: number;
 } = {}) => {
   return client.player.findMany({
     include: {
@@ -22,6 +26,16 @@ const getAllPlayers = async ({
           match: {
             ...(generation && { generation }),
             ...(tier && { tier }),
+            ...((startYear || endYear) && {
+              round: {
+                tournament: {
+                  year: {
+                    ...(startYear && { gte: startYear }),
+                    ...(endYear && { lte: endYear }),
+                  },
+                },
+              },
+            }),
           },
         },
         select: {
@@ -30,6 +44,15 @@ const getAllPlayers = async ({
             select: {
               generation: true,
               tier: true,
+              round: {
+                select: {
+                  tournament: {
+                    select: {
+                      year: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },

@@ -40,6 +40,8 @@ type FilterValue = {
 export function PlayersPage() {
   const [generation, setGeneration] = useState<Generation | ''>('');
   const [tier, setTier] = useState<Tier | ''>('');
+  const [startYear, setStartYear] = useState<number | ''>('');
+  const [endYear, setEndYear] = useState<number | ''>('');
   const {
     data: players,
     isLoading,
@@ -48,6 +50,8 @@ export function PlayersPage() {
   } = useGetPlayersQuery({
     generation: generation || undefined,
     tier: tier || undefined,
+    startYear: startYear || undefined,
+    endYear: endYear || undefined,
   });
   const [sortColumn, setSortColumn] = useState<SortColumn>('matchesWon');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -199,6 +203,44 @@ export function PlayersPage() {
               </option>
             ))}
           </Select>
+        </FilterLabel>
+
+        <FilterLabel>
+          Start Year:
+          <input
+            type="number"
+            value={startYear}
+            onChange={(e) =>
+              setStartYear(e.target.value ? parseInt(e.target.value) : '')
+            }
+            min="2000"
+            max="2024"
+            placeholder="2000"
+            style={{
+              padding: '0.5rem',
+              borderRadius: '4px',
+              border: '1px solid #ccc',
+            }}
+          />
+        </FilterLabel>
+
+        <FilterLabel>
+          End Year:
+          <input
+            type="number"
+            value={endYear}
+            onChange={(e) =>
+              setEndYear(e.target.value ? parseInt(e.target.value) : '')
+            }
+            min="2000"
+            max="2024"
+            placeholder="2024"
+            style={{
+              padding: '0.5rem',
+              borderRadius: '4px',
+              border: '1px solid #ccc',
+            }}
+          />
         </FilterLabel>
       </FilterContainer>
 

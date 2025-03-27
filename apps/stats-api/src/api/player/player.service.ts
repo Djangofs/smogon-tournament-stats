@@ -16,11 +16,20 @@ interface PlayerRecord {
 export const getAllPlayers = async ({
   generation,
   tier,
+  startYear,
+  endYear,
 }: {
   generation?: string;
   tier?: string;
+  startYear?: number;
+  endYear?: number;
 } = {}): Promise<PlayerWithStats[]> => {
-  const players = await playerData.getAllPlayers({ generation, tier });
+  const players = await playerData.getAllPlayers({
+    generation,
+    tier,
+    startYear,
+    endYear,
+  });
 
   return players.map((player) => {
     const matchesWon = player.matches.filter((match) => match.winner).length;

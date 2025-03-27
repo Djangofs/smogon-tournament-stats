@@ -11,6 +11,8 @@ export type Player = {
 export type GetPlayersQueryParams = {
   generation?: string;
   tier?: string;
+  startYear?: number;
+  endYear?: number;
 };
 
 export const playersApi = createApi({

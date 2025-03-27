@@ -8,6 +8,7 @@ export const createGame = async ({
   player1Winner,
   generation,
   tier,
+  playedAt,
 }: {
   matchId: string;
   player1Id: string;
@@ -15,6 +16,7 @@ export const createGame = async ({
   player1Winner: boolean;
   generation: string;
   tier: string;
+  playedAt: Date;
 }) => {
   // Create the game
   const game = await gameData.createGame({
@@ -24,6 +26,7 @@ export const createGame = async ({
     player1Winner,
     generation,
     tier,
+    playedAt,
   });
 
   // Create player game records

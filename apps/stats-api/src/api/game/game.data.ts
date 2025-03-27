@@ -9,6 +9,7 @@ const createGame = async ({
   player1Winner,
   generation,
   tier,
+  playedAt,
 }: {
   matchId: string;
   player1Id: string;
@@ -16,12 +17,14 @@ const createGame = async ({
   player1Winner: boolean;
   generation: string;
   tier: string;
+  playedAt: Date;
 }) => {
   return client.game.create({
     data: {
       matchId,
       generation,
       tier,
+      playedAt,
     },
   });
 };

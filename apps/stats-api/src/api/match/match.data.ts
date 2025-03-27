@@ -9,6 +9,7 @@ const createMatch = async ({
   player2Id,
   generation,
   tier,
+  playedAt,
 }: {
   roundId: string;
   bestOf: number;
@@ -16,6 +17,7 @@ const createMatch = async ({
   player2Id: string;
   generation: string;
   tier: string;
+  playedAt: Date;
 }) => {
   return client.match.create({
     data: {
@@ -23,6 +25,7 @@ const createMatch = async ({
       bestOf,
       generation,
       tier,
+      playedAt,
     },
   });
 };

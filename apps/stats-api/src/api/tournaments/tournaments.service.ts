@@ -29,6 +29,7 @@ const createMatchWithGame = async ({
   result,
   generation,
   tier,
+  tournamentYear,
 }: {
   roundId: string;
   currentPlayer: TournamentPlayer;
@@ -36,6 +37,7 @@ const createMatchWithGame = async ({
   result: 'W' | 'L';
   generation: string;
   tier: string;
+  tournamentYear: number;
 }) => {
   // Create the match
   const newMatch = await createMatch({
@@ -45,6 +47,7 @@ const createMatchWithGame = async ({
     player2Id: opponentPlayer.playerId,
     generation,
     tier,
+    playedAt: new Date(tournamentYear, 0, 1), // January 1st of tournament year
   });
 
   // Create a game for the match
@@ -55,6 +58,7 @@ const createMatchWithGame = async ({
     player1Winner: result === 'W',
     generation,
     tier,
+    playedAt: new Date(tournamentYear, 0, 1), // January 1st of tournament year
   });
 
   // Create player match records based on game results
@@ -213,6 +217,7 @@ export const createTournament = async ({
           result: match.winner === 'player1' ? 'W' : 'L',
           generation: match.generation,
           tier: match.tier,
+          tournamentYear: year,
         });
       });
 

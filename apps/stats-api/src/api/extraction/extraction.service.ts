@@ -39,15 +39,138 @@ export interface TournamentData {
   matches: MatchData[];
 }
 
+export type Generation =
+  | 'RBY'
+  | 'GSC'
+  | 'ADV'
+  | 'DPP'
+  | 'BW'
+  | 'ORAS'
+  | 'SM'
+  | 'SWSH'
+  | 'SV';
+export type Tier = 'OU' | 'Uber' | 'UU' | 'RU' | 'NU' | 'PU' | 'LC';
+export type Format = `${Generation} ${Tier}`;
+
+const normalizeGeneration = (gen: string): Generation => {
+  const genMap: Record<string, Generation> = {
+    RBY: 'RBY',
+    GSC: 'GSC',
+    ADV: 'ADV',
+    DPP: 'DPP',
+    BW: 'BW',
+    BW2: 'BW',
+    XY: 'ORAS',
+    ORAS: 'ORAS',
+    SM: 'SM',
+    USM: 'SM',
+    SWSH: 'SWSH',
+    SV: 'SV',
+  };
+  return genMap[gen] || 'SV'; // Default to latest gen if unknown
+};
+
+const normalizeTier = (tier: string): Tier => {
+  const tierMap: Record<string, Tier> = {
+    OU: 'OU',
+    Uber: 'Uber',
+    Ubers: 'Uber',
+    UU: 'UU',
+    RU: 'RU',
+    NU: 'NU',
+    PU: 'PU',
+    LC: 'LC',
+  };
+  return tierMap[tier] || 'OU'; // Default to OU if unknown
+};
+
+const findMostCommonGeneration = (
+  data: string[][],
+  tierIndex: number
+): Generation => {
+  const genCounts: Record<Generation, number> = {
+    RBY: 0,
+    GSC: 0,
+    ADV: 0,
+    DPP: 0,
+    BW: 0,
+    ORAS: 0,
+    SM: 0,
+    SWSH: 0,
+    SV: 0,
+  };
+
+  // Count generations in the tiers column
+  data.forEach((row) => {
+    const tierCell = row[tierIndex];
+    if (tierCell) {
+      const tiers = tierCell.split('/').map((tier) => tier.trim());
+      tiers.forEach((tier) => {
+        const gen = normalizeGeneration(tier);
+        genCounts[gen]++;
+      });
+    }
+  });
+
+  // Find the most common generation
+  let maxCount = 0;
+  let defaultGen: Generation = 'SV';
+
+  Object.entries(genCounts).forEach(([gen, count]) => {
+    if (count > maxCount) {
+      maxCount = count;
+      defaultGen = gen as Generation;
+    }
+  });
+
+  return defaultGen;
+};
+
+const parseFormat = (formatStr: string, defaultGen: Generation): Format => {
+  if (!formatStr) return `${defaultGen} OU`; // Use tournament's default gen if no format
+
+  // Split by space and handle various formats
+  const parts = formatStr.trim().split(/\s+/);
+
+  if (parts.length === 1) {
+    // If only one part, check if it's a generation or tier
+    const part = parts[0];
+    const normalizedGen = normalizeGeneration(part);
+    const normalizedTier = normalizeTier(part);
+
+    // If the part matches a generation (after normalization), use it with default tier
+    if (normalizedGen !== defaultGen || part === defaultGen) {
+      return `${normalizedGen} OU`;
+    }
+
+    // If the part matches a tier (after normalization), use it with tournament's default gen
+    if (normalizedTier !== 'OU' || part === 'OU') {
+      return `${defaultGen} ${normalizedTier}`;
+    }
+
+    // If we can't determine if it's a gen or tier, use tournament's defaults
+    return `${defaultGen} OU`;
+  }
+
+  if (parts.length === 2) {
+    // If two parts, assume it's "Gen Tier"
+    return `${normalizeGeneration(parts[0])} ${normalizeTier(parts[1])}`;
+  }
+
+  // If more parts or unknown format, use tournament's defaults
+  return `${defaultGen} OU`;
+};
+
 const parseMatchData = (
   matchData: string,
   roundName: string,
   roundIndex: number,
-  currentPlayer: string
+  currentPlayer: string,
+  defaultGen: Generation
 ): MatchData | null => {
   if (!matchData) return null;
 
-  // Parse match data (e.g., "vs. reiku (W) ORAS OU")
+  // Parse match data (e.g., "vs. reiku (W) ORAS OU" or "vs. reiku (W) OU" or "vs. reiku (W) USM OU")
   const trimmedData = matchData.trim();
   if (!trimmedData.startsWith('vs.')) return null;
 
@@ -65,14 +188,17 @@ const parseMatchData = (
   const result = trimmedData.slice(openParenIndex + 1, closeParenIndex) as
     | 'W'
     | 'L';
-  const tier = trimmedData.slice(closeParenIndex + 1).trim();
+
+  // Extract format from the rest of the string
+  const formatStr = trimmedData.slice(closeParenIndex + 1).trim();
+  const format = parseFormat(formatStr, defaultGen);
 
   return {
     roundIndex,
     player1: currentPlayer,
     player2,
     winner: result === 'W' ? 'player1' : 'player2',
-    tier,
+    tier: format,
     roundName,
   };
 };
@@ -83,6 +209,7 @@ const findColumnIndices = (
   playerIndex: number;
   teamIndex: number;
   priceIndex: number;
+  tierIndex: number;
 } => {
   const priceIndex = headerRow.findIndex((cell: string) =>
     cell.includes('Cost')
@@ -93,8 +220,11 @@ const findColumnIndices = (
   const teamIndex = headerRow.findIndex((cell: string) =>
     cell.includes('Team')
   );
+  const tierIndex = headerRow.findIndex((cell: string) =>
+    cell.includes('Tier')
+  );
 
-  return { playerIndex, teamIndex, priceIndex };
+  return { playerIndex, teamIndex, priceIndex, tierIndex };
 };
 
 const findRoundIndices = (headerRow: string[]): number[] => {
@@ -132,6 +262,36 @@ const processPlayerRow = (
   };
 };
 
+const getTierFromRow = (row: string[], tierIndex: number): string[] => {
+  const tierCell = row[tierIndex];
+  if (!tierCell) return [];
+  return tierCell.split('/').map((tier) => tier.trim());
+};
+
+const processCellWithTier = (
+  cell: { formattedValue?: string; note?: string },
+  defaultTiers: string[]
+): string => {
+  const value = cell.formattedValue || '';
+  const note = cell.note || '';
+
+  // If there's no match data, return as is
+  if (!value.startsWith('vs.')) return value;
+
+  // If there's a note, it indicates a different tier
+  if (note) {
+    return `${value} ${note}`;
+  }
+
+  // If there's only one default tier, use it
+  if (defaultTiers.length === 1) {
+    return `${value} ${defaultTiers[0]}`;
+  }
+
+  // If there are multiple default tiers, use the first one
+  return `${value} ${defaultTiers[0]}`;
+};
+
 export const extractTournamentData = async ({
   sheetName,
   sheetId,
@@ -145,17 +305,44 @@ export const extractTournamentData = async ({
     auth: process.env.GOOGLE_API_KEY,
   });
 
-  // Don't need the full range, a sheet name gets everything in that sheet
-  const sheetsData = await sheets.spreadsheets.values.get({
+  const sheetsData = await sheets.spreadsheets.get({
     spreadsheetId: sheetId,
-    range: sheetName,
+    includeGridData: true,
+    ranges: [sheetName],
   });
 
-  const data = sheetsData.data.values;
-  const headerRow = data[0];
+  // Get the first sheet's data
+  const sheetData = sheetsData.data.sheets[0].data[0];
+  if (!sheetData || !sheetData.rowData) {
+    throw new Error('No data found in sheet');
+  }
+
+  // Get header row first to find column indices
+  const headerRow =
+    sheetData.rowData[0]?.values?.map((cell) => cell.formattedValue || '') ||
+    [];
+  if (!headerRow.length) {
+    throw new Error('No header row found in sheet');
+  }
 
   const columnIndices = findColumnIndices(headerRow);
   const roundIndices = findRoundIndices(headerRow);
+
+  // Convert rowData to a 2D array of cell values with tier information
+  const data = sheetData.rowData.map((row) => {
+    if (!row.values) return [];
+
+    // Get default tiers for this row
+    const defaultTiers = getTierFromRow(
+      row.values.map((cell) => cell.formattedValue || ''),
+      columnIndices.tierIndex
+    );
+
+    return row.values.map((cell) => processCellWithTier(cell, defaultTiers));
+  });
+
+  // Find the most common generation in the tournament using the tiers column
+  const defaultGen = findMostCommonGeneration(data, columnIndices.tierIndex);
 
   // Process all player data
   const playerData = data
@@ -182,7 +369,8 @@ export const extractTournamentData = async ({
           matchData,
           headerRow[roundIndex],
           roundIndex,
-          currentPlayer
+          currentPlayer,
+          defaultGen
         );
       })
       .filter((match): match is MatchData => match !== null);
@@ -200,6 +388,10 @@ export const extractTournamentData = async ({
     // Only keep the match if it's the first occurrence
     return duplicateIndex === index;
   });
+
+  console.log(uniqueMatches);
+
+  return;
 
   return {
     players: playerData,

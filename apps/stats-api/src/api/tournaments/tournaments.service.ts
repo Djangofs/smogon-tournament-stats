@@ -122,6 +122,7 @@ export const createTournament = async ({
   isOfficial,
   isTeam,
   year,
+  replayPostUrl,
 }: {
   name: string;
   sheetName: string;
@@ -129,6 +130,7 @@ export const createTournament = async ({
   isOfficial: boolean;
   isTeam: boolean;
   year: number;
+  replayPostUrl?: string;
 }) => {
   let tournament: TournamentDatabase;
   const existingTournament = await tournamentsData.findTournament({ name });
@@ -141,6 +143,7 @@ export const createTournament = async ({
       isOfficial,
       isTeam,
       year,
+      replayPostUrl,
     });
   }
 

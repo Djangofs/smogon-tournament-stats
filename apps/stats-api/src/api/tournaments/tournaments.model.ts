@@ -9,6 +9,7 @@ export interface CreateTournamentRequest {
   isOfficial?: boolean;
   isTeam?: boolean;
   year: number;
+  replayPostUrl?: string;
 }
 
 export interface TournamentDTO {

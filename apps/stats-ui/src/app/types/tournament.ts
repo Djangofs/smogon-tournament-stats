@@ -12,6 +12,7 @@ export interface Tournament {
   isOfficial: boolean;
   isTeam: boolean;
   year: number;
+  replayPostUrl?: string;
   createdAt: string;
   updatedAt: string;
   rounds?: Round[];
@@ -24,4 +25,5 @@ export interface CreateTournamentRequest {
   isOfficial?: boolean;
   isTeam?: boolean;
   year: number;
+  replayPostUrl?: string;
 }

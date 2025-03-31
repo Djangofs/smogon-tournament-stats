@@ -43,14 +43,16 @@ const createTournament = async ({
   isOfficial,
   isTeam,
   year,
+  replayPostUrl,
 }: {
   name: string;
   isOfficial: boolean;
   isTeam: boolean;
   year: number;
+  replayPostUrl?: string;
 }) => {
   return client.tournament.create({
-    data: { name, isOfficial, isTeam, year },
+    data: { name, isOfficial, isTeam, year, replayPostUrl },
   });
 };
 

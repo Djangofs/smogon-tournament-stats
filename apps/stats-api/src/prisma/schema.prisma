@@ -21,6 +21,7 @@ model Tournament {
   isOfficial Boolean @default(false)
   isTeam     Boolean @default(false)
   year      Int
+  replayPostUrl String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

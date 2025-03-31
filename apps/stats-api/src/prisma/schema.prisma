@@ -111,7 +111,7 @@ model Player_Match {
   player            Player @relation(fields: [playerId], references: [id])
   match             Match @relation(fields: [matchId], references: [id])
   team              Tournament_Team @relation(fields: [tournament_teamId], references: [id])
-  winner            Boolean
+  winner            Boolean?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   @@id([playerId, matchId])

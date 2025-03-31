@@ -55,7 +55,7 @@ export const createPlayerMatch = async ({
   playerId: string;
   matchId: string;
   tournament_teamId: string;
-  winner: boolean;
+  winner: boolean | null;
 }) => {
   const existingPlayerMatch = await matchData.findPlayerMatch({
     playerId,

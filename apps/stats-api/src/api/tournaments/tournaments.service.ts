@@ -69,14 +69,14 @@ const createMatchWithGame = async ({
     playerId: currentPlayer.playerId,
     matchId: newMatch.id,
     tournament_teamId: currentPlayer.tournament_teamId,
-    winner: result === 'W',
+    winner: result === 'dead' ? null : result === 'W',
   });
 
   await createPlayerMatch({
     playerId: opponentPlayer.playerId,
     matchId: newMatch.id,
     tournament_teamId: opponentPlayer.tournament_teamId,
-    winner: result === 'L',
+    winner: result === 'dead' ? null : result === 'L',
   });
 
   return newMatch;

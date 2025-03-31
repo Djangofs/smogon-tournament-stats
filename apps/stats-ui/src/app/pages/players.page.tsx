@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useGetPlayersQuery } from '../store/apis/players.api';
 import { Container } from '../components/layout/layout';
-import { Table } from '../components/table/table';
+import { Table, TableRow, TableCell } from '../components/table/table';
 import { PageTitle } from '../components/typography/page-title';
 import styled from 'styled-components';
+import { Link } from 'react-router-dom';
 import {
   GENERATIONS,
   TIERS,
@@ -28,6 +29,14 @@ const Select = styled.select`
   padding: 0.5rem;
   border-radius: 4px;
   border: 1px solid #ccc;
+`;
+
+const StyledLink = styled.a`
+  color: #0066cc;
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 type SortColumn = 'name' | 'matchesWon' | 'matchesLost' | 'winRate';
@@ -251,24 +260,32 @@ export function PlayersPage() {
         initialSortColumn="Matches Won"
         initialSortDirection="desc"
         filters={filters}
-        showWinRateHighlight
       >
-        {filteredAndSortedPlayers.map((player) => (
-          <tr key={player.id}>
-            <td>{player.name}</td>
-            <td>{player.matchesWon}</td>
-            <td>{player.matchesLost}</td>
-            <td>
-              {player.matchesWon + player.matchesLost > 0
-                ? `${Math.round(
-                    (player.matchesWon /
-                      (player.matchesWon + player.matchesLost)) *
-                      100
-                  )}%`
-                : 'N/A'}
-            </td>
-          </tr>
-        ))}
+        {filteredAndSortedPlayers.map((player) => {
+          const winRate =
+            player.matchesWon + player.matchesLost > 0
+              ? Math.round(
+                  (player.matchesWon /
+                    (player.matchesWon + player.matchesLost)) *
+                    100
+                )
+              : 0;
+          return (
+            <TableRow key={player.id}>
+              <TableCell>
+                <Link
+                  to={`/players/${player.id}`}
+                  style={{ textDecoration: 'none', color: '#0066cc' }}
+                >
+                  {player.name}
+                </Link>
+              </TableCell>
+              <TableCell>{player.matchesWon}</TableCell>
+              <TableCell>{player.matchesLost}</TableCell>
+              <TableCell>{winRate}%</TableCell>
+            </TableRow>
+          );
+        })}
       </Table>
     </Container>
   );

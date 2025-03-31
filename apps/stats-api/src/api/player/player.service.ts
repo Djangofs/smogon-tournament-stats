@@ -8,6 +8,25 @@ interface PlayerWithStats {
   matchesLost: number;
 }
 
+interface PlayerMatch {
+  id: string;
+  winner: boolean;
+  generation: string;
+  tier: string;
+  year: number;
+  tournamentName: string;
+  opponentName: string;
+  opponentId: string;
+}
+
+interface PlayerDetails {
+  id: string;
+  name: string;
+  matchesWon: number;
+  matchesLost: number;
+  matches: PlayerMatch[];
+}
+
 interface PlayerRecord {
   id: string;
   name: string;
@@ -134,5 +153,39 @@ export const linkPlayerRecords = async ({
   return {
     id: oldPlayer.id,
     name: newPlayer.currentName,
+  };
+};
+
+export const getPlayerById = async (id: string): Promise<PlayerDetails> => {
+  const player = await playerData.getPlayerById({ id });
+  if (!player) {
+    throw new Error(`Player with ID ${id} not found`);
+  }
+
+  const matchesWon = player.matches.filter((match) => match.winner).length;
+  const matchesLost = player.matches.filter((match) => !match.winner).length;
+
+  const matches = player.matches.map((match) => {
+    // Find the opponent in the match
+    const opponent = match.match.players.find((p) => p.playerId !== player.id);
+
+    return {
+      id: match.match.id,
+      winner: match.winner,
+      generation: match.match.generation,
+      tier: match.match.tier,
+      year: match.match.round.tournament.year,
+      tournamentName: match.match.round.tournament.name,
+      opponentName: opponent?.player.name || 'Unknown',
+      opponentId: opponent?.playerId || '',
+    };
+  });
+
+  return {
+    id: player.id,
+    name: player.name,
+    matchesWon,
+    matchesLost,
+    matches,
   };
 };

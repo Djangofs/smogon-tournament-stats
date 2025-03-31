@@ -1,11 +1,5 @@
 import styled from 'styled-components';
-import {
-  useState,
-  Children,
-  isValidElement,
-  cloneElement,
-  ReactElement,
-} from 'react';
+import { useState, Children, isValidElement, ReactElement } from 'react';
 
 const StyledTable = styled.table`
   width: 100%;
@@ -91,12 +85,11 @@ interface FilterValue {
 }
 
 interface TableCellProps {
-  children: string | number;
+  children: string | number | ReactElement;
 }
 
 interface TableRowProps {
   children: ReactElement<TableCellProps>[];
-  style?: React.CSSProperties;
 }
 
 interface TableProps {
@@ -107,25 +100,8 @@ interface TableProps {
   initialSortColumn?: string;
   initialSortDirection?: 'asc' | 'desc';
   filters?: Record<string, FilterValue>;
-  showWinRateHighlight?: boolean;
+  noFilters?: boolean;
 }
-
-const getWinRateColor = (winRate: number): string => {
-  // Convert win rate to a value between 0 and 1
-  const normalizedRate = winRate / 100;
-
-  // Define colors for 0% and 100%
-  const red = [255, 200, 200]; // Light red
-  const green = [200, 255, 200]; // Light green
-
-  // Interpolate between red and green based on win rate
-  const color = red.map((start, i) => {
-    const end = green[i];
-    return Math.round(start + (end - start) * normalizedRate);
-  });
-
-  return `rgb(${color.join(',')})`;
-};
 
 export function Table({
   headers,
@@ -135,7 +111,7 @@ export function Table({
   initialSortColumn,
   initialSortDirection = 'asc',
   filters = {},
-  showWinRateHighlight = false,
+  noFilters = false,
 }: TableProps) {
   const [sortColumn, setSortColumn] = useState<string | null>(
     initialSortColumn || null
@@ -168,74 +144,55 @@ export function Table({
     return ['Matches Won', 'Matches Lost', 'Win Rate'].includes(header);
   };
 
-  // Process children to add background color based on win rate
-  const processedChildren = showWinRateHighlight
-    ? Children.map(children, (child) => {
-        if (isValidElement<TableRowProps>(child)) {
-          const cells = Children.toArray(
-            child.props.children
-          ) as ReactElement<TableCellProps>[];
-          const winRateCell = cells[3]; // Win Rate is the 4th column
-          if (winRateCell && typeof winRateCell.props.children === 'string') {
-            const winRateText = winRateCell.props.children;
-            const winRate = parseFloat(winRateText);
-            if (!isNaN(winRate)) {
-              const backgroundColor = getWinRateColor(winRate);
-              return cloneElement(child, {
-                style: { backgroundColor },
-              });
-            }
-          }
-        }
-        return child;
-      })
-    : children;
-
   return (
     <StyledTable>
       <thead>
         <tr>
           {headers.map((header) => (
             <th key={header}>
-              {isNumericColumn(header) ? (
-                <FilterContainer>
-                  <FilterSelect
-                    value={filters[header]?.operator || ''}
-                    onChange={(e) =>
-                      handleFilterChange(
-                        header,
-                        e.target.value as '>' | '<' | '=' | '',
-                        filters[header]?.value || ''
-                      )
-                    }
-                  >
-                    <option value="">No filter</option>
-                    <option value=">">{'>'}</option>
-                    <option value="<">{'<'}</option>
-                    <option value="=">{'='}</option>
-                  </FilterSelect>
-                  <FilterInput
-                    type="number"
-                    placeholder="Value"
-                    value={filters[header]?.value || ''}
-                    onChange={(e) =>
-                      handleFilterChange(
-                        header,
-                        filters[header]?.operator || '',
-                        e.target.value
-                      )
-                    }
-                  />
-                </FilterContainer>
-              ) : (
-                <FilterInput
-                  type="text"
-                  placeholder={`Search ${header}...`}
-                  value={filters[header]?.value || ''}
-                  onChange={(e) =>
-                    handleFilterChange(header, '=', e.target.value)
-                  }
-                />
+              {!noFilters && (
+                <>
+                  {isNumericColumn(header) ? (
+                    <FilterContainer>
+                      <FilterSelect
+                        value={filters[header]?.operator || ''}
+                        onChange={(e) =>
+                          handleFilterChange(
+                            header,
+                            e.target.value as '>' | '<' | '=' | '',
+                            filters[header]?.value || ''
+                          )
+                        }
+                      >
+                        <option value="">No filter</option>
+                        <option value=">">{'>'}</option>
+                        <option value="<">{'<'}</option>
+                        <option value="=">{'='}</option>
+                      </FilterSelect>
+                      <FilterInput
+                        type="number"
+                        placeholder="Value"
+                        value={filters[header]?.value || ''}
+                        onChange={(e) =>
+                          handleFilterChange(
+                            header,
+                            filters[header]?.operator || '',
+                            e.target.value
+                          )
+                        }
+                      />
+                    </FilterContainer>
+                  ) : (
+                    <FilterInput
+                      type="text"
+                      placeholder={`Search ${header}...`}
+                      value={filters[header]?.value || ''}
+                      onChange={(e) =>
+                        handleFilterChange(header, '=', e.target.value)
+                      }
+                    />
+                  )}
+                </>
               )}
               <div onClick={() => handleSort(header)}>
                 {header}
@@ -247,7 +204,7 @@ export function Table({
           ))}
         </tr>
       </thead>
-      <tbody>{processedChildren}</tbody>
+      <tbody>{children}</tbody>
     </StyledTable>
   );
 }

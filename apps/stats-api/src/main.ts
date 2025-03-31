@@ -11,6 +11,7 @@ import {
 import {
   getAllPlayersRoute,
   linkPlayerRecordsRoute,
+  getPlayerByIdRoute,
 } from './api/player/player.route';
 import logger from './utils/logger';
 
@@ -42,6 +43,10 @@ app.post('/tournament', async (req, res, next) => {
 
 app.get('/players', async (req, res) => {
   return getAllPlayersRoute(req, res);
+});
+
+app.get('/players/:id', async (req, res) => {
+  return getPlayerByIdRoute(req, res);
 });
 
 app.post('/players/link', async (req, res) => {

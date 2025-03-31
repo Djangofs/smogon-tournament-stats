@@ -266,6 +266,32 @@ const findPlayerByName = async ({
   return null;
 };
 
+const getPlayerById = async ({ id }: { id: string }) => {
+  return client.player.findUnique({
+    where: { id },
+    include: {
+      matches: {
+        include: {
+          match: {
+            include: {
+              players: {
+                include: {
+                  player: true,
+                },
+              },
+              round: {
+                include: {
+                  tournament: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
 export const playerData = {
   getAllPlayers,
   createPlayer,
@@ -277,4 +303,5 @@ export const playerData = {
   getPlayerNames,
   findPlayerByName,
   linkPlayerRecords,
+  getPlayerById,
 };

@@ -6,11 +6,12 @@ interface PlayerWithStats {
   name: string;
   matchesWon: number;
   matchesLost: number;
+  deadGames: number;
 }
 
 interface PlayerMatch {
   id: string;
-  winner: boolean;
+  winner: boolean | null;
   generation: string;
   tier: string;
   year: number;
@@ -24,6 +25,7 @@ interface PlayerDetails {
   name: string;
   matchesWon: number;
   matchesLost: number;
+  deadGames: number;
   matches: PlayerMatch[];
 }
 
@@ -51,14 +53,22 @@ export const getAllPlayers = async ({
   });
 
   return players.map((player) => {
-    const matchesWon = player.matches.filter((match) => match.winner).length;
-    const matchesLost = player.matches.filter((match) => !match.winner).length;
+    const matchesWon = player.matches.filter(
+      (match) => match.winner === true
+    ).length;
+    const matchesLost = player.matches.filter(
+      (match) => match.winner === false
+    ).length;
+    const deadGames = player.matches.filter(
+      (match) => match.winner === null
+    ).length;
 
     return {
       id: player.id,
       name: player.name,
       matchesWon,
       matchesLost,
+      deadGames,
     };
   });
 };
@@ -162,8 +172,15 @@ export const getPlayerById = async (id: string): Promise<PlayerDetails> => {
     throw new Error(`Player with ID ${id} not found`);
   }
 
-  const matchesWon = player.matches.filter((match) => match.winner).length;
-  const matchesLost = player.matches.filter((match) => !match.winner).length;
+  const matchesWon = player.matches.filter(
+    (match) => match.winner === true
+  ).length;
+  const matchesLost = player.matches.filter(
+    (match) => match.winner === false
+  ).length;
+  const deadGames = player.matches.filter(
+    (match) => match.winner === null
+  ).length;
 
   const matches = player.matches.map((match) => {
     // Find the opponent in the match
@@ -186,6 +203,7 @@ export const getPlayerById = async (id: string): Promise<PlayerDetails> => {
     name: player.name,
     matchesWon,
     matchesLost,
+    deadGames,
     matches,
   };
 };

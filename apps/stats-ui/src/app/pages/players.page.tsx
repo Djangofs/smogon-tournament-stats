@@ -1,16 +1,12 @@
 import { useState } from 'react';
-import { useGetPlayersQuery } from '../store/apis/players.api';
+import { useGetPlayersQuery, Player } from '../store/apis/players.api';
 import { Container } from '../components/layout/layout';
 import { Table, TableRow, TableCell } from '../components/table/table';
 import { PageTitle } from '../components/typography/page-title';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
-import {
-  GENERATIONS,
-  TIERS,
-  Generation,
-  Tier,
-} from '@smogon-tournament-stats/shared-constants';
+import { Generation, Tier } from '@smogon-tournament-stats/shared-constants';
+import { GENERATIONS, TIERS } from '@smogon-tournament-stats/shared-constants';
 
 const FilterContainer = styled.div`
   display: flex;
@@ -39,7 +35,12 @@ const StyledLink = styled.a`
   }
 `;
 
-type SortColumn = 'name' | 'matchesWon' | 'matchesLost' | 'winRate';
+type SortColumn =
+  | 'name'
+  | 'matcheswon'
+  | 'matcheslost'
+  | 'winrate'
+  | 'deadgames';
 type SortDirection = 'asc' | 'desc';
 type FilterValue = {
   operator: '>' | '<' | '=' | '';
@@ -62,27 +63,47 @@ export function PlayersPage() {
     startYear: startYear || undefined,
     endYear: endYear || undefined,
   });
-  const [sortColumn, setSortColumn] = useState<SortColumn>('matchesWon');
+  const [sortColumn, setSortColumn] = useState<SortColumn>('matcheswon');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [filters, setFilters] = useState<Record<string, FilterValue>>({});
 
-  const handleSort = (column: string, direction: SortDirection) => {
-    const columnMap: Record<string, SortColumn> = {
-      Name: 'name',
-      'Matches Won': 'matchesWon',
-      'Matches Lost': 'matchesLost',
-      'Win Rate': 'winRate',
-    };
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
 
-    setSortColumn(columnMap[column]);
-    setSortDirection(direction);
+  const handleFilter = (
+    column: string,
+    operator: FilterValue['operator'],
+    value: string
+  ) => {
+    const normalizedColumn = column.toLowerCase().replace(/\s+/g, '');
+    // For numeric columns, ensure the value is a valid number
+    if (
+      ['matcheswon', 'matcheslost', 'winrate', 'deadgames'].includes(
+        normalizedColumn
+      )
+    ) {
+      const numValue = parseFloat(value);
+      if (isNaN(numValue) && value !== '') {
+        return;
+      }
+    }
+    setFilters((prev) => ({
+      ...prev,
+      [column]: { operator, value },
+    }));
   };
 
   const compareValues = (
     a: number,
     b: number,
-    operator: '>' | '<' | '=' | ''
-  ) => {
+    operator: FilterValue['operator']
+  ): boolean => {
     switch (operator) {
       case '>':
         return a > b;
@@ -90,23 +111,18 @@ export function PlayersPage() {
         return a < b;
       case '=':
         return a === b;
+      case '':
+        return true;
       default:
         return true;
     }
   };
 
-  const handleFilter = (column: string, filter: FilterValue) => {
-    setFilters((prev) => ({
-      ...prev,
-      [column]: filter,
-    }));
-  };
-
   const filteredAndSortedPlayers = [...(players || [])]
-    .filter((player) => {
+    .filter((player: Player) => {
       // First check if the player has any matches in the selected format
       if (generation || tier) {
-        if (player.matchesWon + player.matchesLost === 0) {
+        if (player.matchesWon + player.matchesLost + player.deadGames === 0) {
           return false;
         }
       }
@@ -118,17 +134,20 @@ export function PlayersPage() {
         const value = parseFloat(filter.value);
         if (isNaN(value)) return true;
 
-        switch (column) {
-          case 'Name':
+        const normalizedColumn = column.toLowerCase().replace(/\s+/g, '');
+        switch (normalizedColumn) {
+          case 'name':
             return (
               filter.value === '' ||
               player.name.toLowerCase().includes(filter.value.toLowerCase())
             );
-          case 'Matches Won':
+          case 'matcheswon':
             return compareValues(player.matchesWon, value, filter.operator);
-          case 'Matches Lost':
+          case 'matcheslost':
             return compareValues(player.matchesLost, value, filter.operator);
-          case 'Win Rate': {
+          case 'deadgames':
+            return compareValues(player.deadGames, value, filter.operator);
+          case 'winrate': {
             const winRate =
               player.matchesWon + player.matchesLost > 0
                 ? Math.round(
@@ -144,17 +163,19 @@ export function PlayersPage() {
         }
       });
     })
-    .sort((a, b) => {
+    .sort((a: Player, b: Player) => {
       const multiplier = sortDirection === 'asc' ? 1 : -1;
 
       switch (sortColumn) {
         case 'name':
           return multiplier * a.name.localeCompare(b.name);
-        case 'matchesWon':
+        case 'matcheswon':
           return multiplier * (a.matchesWon - b.matchesWon);
-        case 'matchesLost':
+        case 'matcheslost':
           return multiplier * (a.matchesLost - b.matchesLost);
-        case 'winRate': {
+        case 'deadgames':
+          return multiplier * (a.deadGames - b.deadGames);
+        case 'winrate': {
           const rateA =
             a.matchesWon + a.matchesLost > 0
               ? a.matchesWon / (a.matchesWon + a.matchesLost)
@@ -181,7 +202,7 @@ export function PlayersPage() {
   return (
     <Container>
       <PageTitle>Players</PageTitle>
-      <p>Browse all Smogon tournament players and their statistics</p>
+      <p>View statistics for all players</p>
 
       <FilterContainer>
         <FilterLabel>
@@ -213,51 +234,23 @@ export function PlayersPage() {
             ))}
           </Select>
         </FilterLabel>
-
-        <FilterLabel>
-          Start Year:
-          <input
-            type="number"
-            value={startYear}
-            onChange={(e) =>
-              setStartYear(e.target.value ? parseInt(e.target.value) : '')
-            }
-            min="2000"
-            max="2024"
-            placeholder="2000"
-            style={{
-              padding: '0.5rem',
-              borderRadius: '4px',
-              border: '1px solid #ccc',
-            }}
-          />
-        </FilterLabel>
-
-        <FilterLabel>
-          End Year:
-          <input
-            type="number"
-            value={endYear}
-            onChange={(e) =>
-              setEndYear(e.target.value ? parseInt(e.target.value) : '')
-            }
-            min="2000"
-            max="2024"
-            placeholder="2024"
-            style={{
-              padding: '0.5rem',
-              borderRadius: '4px',
-              border: '1px solid #ccc',
-            }}
-          />
-        </FilterLabel>
       </FilterContainer>
 
       <Table
-        headers={['Name', 'Matches Won', 'Matches Lost', 'Win Rate']}
-        onSort={handleSort}
-        onFilter={handleFilter}
-        initialSortColumn="Matches Won"
+        headers={[
+          'Name',
+          'Matches Won',
+          'Matches Lost',
+          'Dead Games',
+          'Win Rate',
+        ]}
+        onSort={(column: string, direction: SortDirection) =>
+          handleSort(column as SortColumn)
+        }
+        onFilter={(column: string, filter: FilterValue) =>
+          handleFilter(column, filter.operator, filter.value)
+        }
+        initialSortColumn="matcheswon"
         initialSortDirection="desc"
         filters={filters}
       >
@@ -282,6 +275,7 @@ export function PlayersPage() {
               </TableCell>
               <TableCell>{player.matchesWon}</TableCell>
               <TableCell>{player.matchesLost}</TableCell>
+              <TableCell>{player.deadGames}</TableCell>
               <TableCell>{winRate}%</TableCell>
             </TableRow>
           );

@@ -1,8 +1,4 @@
-export interface Player {
-  id: string;
-  name: string;
-}
-
+import { Player } from './player';
 export interface Team {
   id: string;
   name: string;

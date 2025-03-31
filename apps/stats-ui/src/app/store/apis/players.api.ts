@@ -3,7 +3,7 @@ import { environment } from '../../../environments/environment';
 
 export interface PlayerMatch {
   id: string;
-  winner: boolean;
+  winner: boolean | null;
   generation: string;
   tier: string;
   year: number;
@@ -17,6 +17,7 @@ export interface Player {
   name: string;
   matchesWon: number;
   matchesLost: number;
+  deadGames: number;
 }
 
 export interface PlayerDetails extends Player {

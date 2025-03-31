@@ -144,7 +144,7 @@ export function PlayerDetailPage() {
     id: match.id,
     date: format(new Date(match.year, 0, 1), 'MMM d, yyyy'),
     opponent: match.opponentName,
-    result: match.winner ? 'Won' : 'Lost',
+    result: match.winner === null ? 'Dead Game' : match.winner ? 'Won' : 'Lost',
     generation: match.generation,
     tier: match.tier,
     winner: match.winner,
@@ -174,6 +174,13 @@ export function PlayerDetailPage() {
           case 'Opponent':
             return match.opponent.toLowerCase().includes(value);
           case 'Result':
+            if (value === 'dead game') {
+              return match.winner === null;
+            } else if (value === 'won') {
+              return match.winner === true;
+            } else if (value === 'lost') {
+              return match.winner === false;
+            }
             return match.result.toLowerCase().includes(value);
           case 'Generation':
             return match.generation === filter.value;
@@ -204,8 +211,10 @@ export function PlayerDetailPage() {
     });
 
   const filteredStats = {
-    matchesWon: filteredMatches.filter((match) => match.winner).length,
-    matchesLost: filteredMatches.filter((match) => !match.winner).length,
+    matchesWon: filteredMatches.filter((match) => match.winner === true).length,
+    matchesLost: filteredMatches.filter((match) => match.winner === false)
+      .length,
+    deadGames: filteredMatches.filter((match) => match.winner === null).length,
   };
 
   const winRate =
@@ -252,6 +261,7 @@ export function PlayerDetailPage() {
               <option value="">All Results</option>
               <option value="Won">Won</option>
               <option value="Lost">Lost</option>
+              <option value="Dead Game">Dead Game</option>
             </FilterSelect>
           </FilterGroup>
           <FilterGroup>
@@ -289,7 +299,9 @@ export function PlayerDetailPage() {
         <StatCard>
           <StatLabel>Total Matches</StatLabel>
           <StatValue>
-            {filteredStats.matchesWon + filteredStats.matchesLost}
+            {filteredStats.matchesWon +
+              filteredStats.matchesLost +
+              filteredStats.deadGames}
           </StatValue>
         </StatCard>
         <StatCard>
@@ -299,6 +311,10 @@ export function PlayerDetailPage() {
         <StatCard>
           <StatLabel>Matches Lost</StatLabel>
           <StatValue>{filteredStats.matchesLost}</StatValue>
+        </StatCard>
+        <StatCard>
+          <StatLabel>Dead Games</StatLabel>
+          <StatValue>{filteredStats.deadGames}</StatValue>
         </StatCard>
         <StatCard>
           <StatLabel>Win Rate</StatLabel>
@@ -318,7 +334,13 @@ export function PlayerDetailPage() {
           <TableRow key={match.id}>
             <TableCell>{match.date}</TableCell>
             <TableCell>{match.opponent}</TableCell>
-            <TableCell>{match.result}</TableCell>
+            <TableCell>
+              {match.winner === null
+                ? 'Dead Game'
+                : match.winner
+                ? 'Won'
+                : 'Lost'}
+            </TableCell>
             <TableCell>{match.generation}</TableCell>
             <TableCell>{match.tier}</TableCell>
           </TableRow>

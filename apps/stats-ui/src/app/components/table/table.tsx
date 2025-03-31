@@ -114,21 +114,22 @@ export function Table({
   noFilters = false,
 }: TableProps) {
   const [sortColumn, setSortColumn] = useState<string | null>(
-    initialSortColumn || null
+    initialSortColumn?.toLowerCase().replace(/\s+/g, '') || null
   );
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(
     initialSortDirection
   );
 
   const handleSort = (header: string) => {
-    if (sortColumn === header) {
+    const normalizedHeader = header.toLowerCase().replace(/\s+/g, '');
+    if (sortColumn === normalizedHeader) {
       const newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
       setSortDirection(newDirection);
-      onSort?.(header, newDirection);
+      onSort?.(normalizedHeader, newDirection);
     } else {
-      setSortColumn(header);
+      setSortColumn(normalizedHeader);
       setSortDirection('asc');
-      onSort?.(header, 'asc');
+      onSort?.(normalizedHeader, 'asc');
     }
   };
 
@@ -137,71 +138,85 @@ export function Table({
     operator: '>' | '<' | '=' | '',
     value: string
   ) => {
-    onFilter?.(header, { operator, value });
+    const normalizedHeader = header.toLowerCase().replace(/\s+/g, '');
+    // For numeric columns, ensure the value is a valid number
+    if (isNumericColumn(normalizedHeader)) {
+      const numValue = parseFloat(value);
+      if (isNaN(numValue) && value !== '') {
+        return;
+      }
+    }
+    onFilter?.(normalizedHeader, { operator, value });
   };
 
   const isNumericColumn = (header: string) => {
-    return ['Matches Won', 'Matches Lost', 'Win Rate'].includes(header);
+    const normalizedHeader = header.toLowerCase().replace(/\s+/g, '');
+    return ['matcheswon', 'matcheslost', 'winrate', 'deadgames'].includes(
+      normalizedHeader
+    );
   };
 
   return (
     <StyledTable>
       <thead>
         <tr>
-          {headers.map((header) => (
-            <th key={header}>
-              {!noFilters && (
-                <>
-                  {isNumericColumn(header) ? (
-                    <FilterContainer>
-                      <FilterSelect
-                        value={filters[header]?.operator || ''}
-                        onChange={(e) =>
-                          handleFilterChange(
-                            header,
-                            e.target.value as '>' | '<' | '=' | '',
-                            filters[header]?.value || ''
-                          )
-                        }
-                      >
-                        <option value="">No filter</option>
-                        <option value=">">{'>'}</option>
-                        <option value="<">{'<'}</option>
-                        <option value="=">{'='}</option>
-                      </FilterSelect>
+          {headers.map((header) => {
+            const normalizedHeader = header.toLowerCase().replace(/\s+/g, '');
+            return (
+              <th key={header}>
+                {!noFilters && (
+                  <>
+                    {isNumericColumn(normalizedHeader) ? (
+                      <FilterContainer>
+                        <FilterSelect
+                          value={filters[normalizedHeader]?.operator || ''}
+                          onChange={(e) =>
+                            handleFilterChange(
+                              header,
+                              e.target.value as '>' | '<' | '=' | '',
+                              filters[normalizedHeader]?.value || ''
+                            )
+                          }
+                        >
+                          <option value="">No filter</option>
+                          <option value=">">{'>'}</option>
+                          <option value="<">{'<'}</option>
+                          <option value="=">{'='}</option>
+                        </FilterSelect>
+                        <FilterInput
+                          type="number"
+                          placeholder="Value"
+                          value={filters[normalizedHeader]?.value || ''}
+                          onChange={(e) =>
+                            handleFilterChange(
+                              header,
+                              filters[normalizedHeader]?.operator || '',
+                              e.target.value
+                            )
+                          }
+                        />
+                      </FilterContainer>
+                    ) : (
                       <FilterInput
-                        type="number"
-                        placeholder="Value"
-                        value={filters[header]?.value || ''}
+                        type="text"
+                        placeholder={`Search ${header}...`}
+                        value={filters[normalizedHeader]?.value || ''}
                         onChange={(e) =>
-                          handleFilterChange(
-                            header,
-                            filters[header]?.operator || '',
-                            e.target.value
-                          )
+                          handleFilterChange(header, '=', e.target.value)
                         }
                       />
-                    </FilterContainer>
-                  ) : (
-                    <FilterInput
-                      type="text"
-                      placeholder={`Search ${header}...`}
-                      value={filters[header]?.value || ''}
-                      onChange={(e) =>
-                        handleFilterChange(header, '=', e.target.value)
-                      }
-                    />
-                  )}
-                </>
-              )}
-              <div onClick={() => handleSort(header)}>
-                {header}
-                {sortColumn === header && (
-                  <SortIcon>{sortDirection === 'asc' ? '↑' : '↓'}</SortIcon>
+                    )}
+                  </>
                 )}
-              </div>
-            </th>
-          ))}
+                <div onClick={() => handleSort(header)}>
+                  {header}
+                  {sortColumn === normalizedHeader && (
+                    <SortIcon>{sortDirection === 'asc' ? '↑' : '↓'}</SortIcon>
+                  )}
+                </div>
+              </th>
+            );
+          })}
         </tr>
       </thead>
       <tbody>{children}</tbody>

@@ -1,5 +1,4 @@
 import { matchData } from './match.data';
-import { gameData } from '../game/game.data';
 import logger from '../../utils/logger';
 
 export const createMatch = async ({
@@ -51,10 +50,12 @@ export const createPlayerMatch = async ({
   playerId,
   matchId,
   tournament_teamId,
+  winner,
 }: {
   playerId: string;
   matchId: string;
   tournament_teamId: string;
+  winner: boolean;
 }) => {
   const existingPlayerMatch = await matchData.findPlayerMatch({
     playerId,
@@ -65,18 +66,6 @@ export const createPlayerMatch = async ({
     logger.info(`Player match ${playerId}:${matchId} already exists`);
     return existingPlayerMatch;
   }
-
-  // Get all games for this match
-  const games = await gameData.getMatchGames({ matchId });
-
-  // Count wins for this player
-  const playerWins = games.reduce((count, game) => {
-    const playerGame = game.players.find((p) => p.playerId === playerId);
-    return count + (playerGame?.winner ? 1 : 0);
-  }, 0);
-
-  // Determine if this player won the match
-  const winner = playerWins > games.length / 2;
 
   return matchData.createPlayerMatch({
     playerId,

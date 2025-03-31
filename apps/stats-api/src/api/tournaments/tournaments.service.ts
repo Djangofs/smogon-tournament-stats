@@ -34,7 +34,7 @@ const createMatchWithGame = async ({
   roundId: string;
   currentPlayer: TournamentPlayer;
   opponentPlayer: TournamentPlayer;
-  result: 'W' | 'L';
+  result: 'W' | 'L' | 'dead';
   generation: string;
   tier: string;
   tournamentYear: number;
@@ -50,28 +50,33 @@ const createMatchWithGame = async ({
     playedAt: new Date(tournamentYear, 0, 1), // January 1st of tournament year
   });
 
-  // Create a game for the match
-  await createGame({
-    matchId: newMatch.id,
-    player1Id: currentPlayer.playerId,
-    player2Id: opponentPlayer.playerId,
-    player1Winner: result === 'W',
-    generation,
-    tier,
-    playedAt: new Date(tournamentYear, 0, 1), // January 1st of tournament year
-  });
+  // Only create a game if it's not a dead game
+  if (result !== 'dead') {
+    // Create a game for the match
+    await createGame({
+      matchId: newMatch.id,
+      player1Id: currentPlayer.playerId,
+      player2Id: opponentPlayer.playerId,
+      player1Winner: result === 'W',
+      generation,
+      tier,
+      playedAt: new Date(tournamentYear, 0, 1), // January 1st of tournament year
+    });
+  }
 
   // Create player match records based on game results
   await createPlayerMatch({
     playerId: currentPlayer.playerId,
     matchId: newMatch.id,
     tournament_teamId: currentPlayer.tournament_teamId,
+    winner: result === 'W',
   });
 
   await createPlayerMatch({
     playerId: opponentPlayer.playerId,
     matchId: newMatch.id,
     tournament_teamId: opponentPlayer.tournament_teamId,
+    winner: result === 'L',
   });
 
   return newMatch;
@@ -214,7 +219,12 @@ export const createTournament = async ({
           roundId: roundRecord.id,
           currentPlayer: player1,
           opponentPlayer: player2,
-          result: match.winner === 'player1' ? 'W' : 'L',
+          result:
+            match.winner === 'player1'
+              ? 'W'
+              : match.winner === 'player2'
+              ? 'L'
+              : 'dead',
           generation: match.generation,
           tier: match.tier,
           tournamentYear: year,

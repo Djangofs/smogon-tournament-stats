@@ -11,7 +11,7 @@ export interface MatchData {
   roundIndex: number;
   player1: string;
   player2: string;
-  winner: 'player1' | 'player2';
+  winner: 'player1' | 'player2' | 'dead';
   generation: string;
   tier: string;
   roundName: string;
@@ -105,9 +105,7 @@ const parseMatchData = (
   }
 
   const player2 = trimmedData.slice(vsIndex + 3, openParenIndex).trim();
-  const result = trimmedData.slice(openParenIndex + 1, closeParenIndex) as
-    | 'W'
-    | 'L';
+  const result = trimmedData.slice(openParenIndex + 1, closeParenIndex).trim();
 
   // Extract format from the rest of the string
   const formatStr = trimmedData.slice(closeParenIndex + 1).trim();
@@ -120,7 +118,7 @@ const parseMatchData = (
     roundIndex,
     player1: currentPlayer,
     player2,
-    winner: result === 'W' ? 'player1' : 'player2',
+    winner: result === 'W' ? 'player1' : result === 'L' ? 'player2' : 'dead',
     generation,
     tier,
     roundName,

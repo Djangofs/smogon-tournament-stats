@@ -149,6 +149,7 @@ interface ModalProps {
     isOfficial: boolean;
     isTeam: boolean;
     year: number;
+    replayPostUrl?: string;
   }) => void;
   isLoading?: boolean;
 }
@@ -171,6 +172,7 @@ export function Modal({
       isOfficial: formData.get('isOfficial') === 'true',
       isTeam: formData.get('isTeam') === 'true',
       year: parseInt(formData.get('year') as string),
+      replayPostUrl: (formData.get('replayPostUrl') as string) || undefined,
     });
   };
 
@@ -227,6 +229,16 @@ export function Modal({
               name="sheetId"
               required
               placeholder="e.g., 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+              disabled={isLoading}
+            />
+          </FormGroup>
+          <FormGroup>
+            <StyledLabel htmlFor="replayPostUrl">Replay Post URL</StyledLabel>
+            <StyledInput
+              type="url"
+              id="replayPostUrl"
+              name="replayPostUrl"
+              placeholder="e.g., https://www.smogon.com/forums/threads/tournament-replays.123456"
               disabled={isLoading}
             />
           </FormGroup>

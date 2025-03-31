@@ -60,6 +60,7 @@ export function TournamentsPage() {
     isOfficial: boolean;
     isTeam: boolean;
     year: number;
+    replayPostUrl?: string;
   }) => {
     try {
       await createTournament(data).unwrap();

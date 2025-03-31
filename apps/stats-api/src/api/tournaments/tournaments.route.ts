@@ -20,7 +20,8 @@ const getAllTournamentsController = async (): Promise<TournamentDTO[]> => {
 };
 
 export const createTournamentRoute = async (req: Request, res: Response) => {
-  const { name, sheetName, sheetId, isOfficial, isTeam, year } = req.body;
+  const { name, sheetName, sheetId, isOfficial, isTeam, year, replayPostUrl } =
+    req.body;
 
   const tournament = await createTournamentController({
     name,
@@ -29,6 +30,7 @@ export const createTournamentRoute = async (req: Request, res: Response) => {
     isOfficial,
     isTeam,
     year,
+    replayPostUrl,
   });
 
   res.send(tournament);
@@ -41,6 +43,7 @@ const createTournamentController = async ({
   isOfficial,
   isTeam,
   year,
+  replayPostUrl,
 }: {
   name: string;
   sheetName: string;
@@ -48,6 +51,7 @@ const createTournamentController = async ({
   isOfficial: boolean;
   isTeam: boolean;
   year: number;
+  replayPostUrl?: string;
 }) => {
   const tournament = await createTournament({
     name,
@@ -56,6 +60,7 @@ const createTournamentController = async ({
     isOfficial,
     isTeam,
     year,
+    replayPostUrl,
   });
 
   return tournament;

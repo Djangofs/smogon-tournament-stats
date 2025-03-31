@@ -35,8 +35,15 @@ export const tournamentsController = {
 
   createTournament: async (req: Request, res: Response) => {
     try {
-      const { name, sheetName, sheetId, isOfficial, isTeam, year } =
-        req.body as CreateTournamentRequest;
+      const {
+        name,
+        sheetName,
+        sheetId,
+        isOfficial,
+        isTeam,
+        year,
+        replayPostUrl,
+      } = req.body as CreateTournamentRequest;
       const tournament = await createTournament({
         name,
         sheetName,
@@ -44,6 +51,7 @@ export const tournamentsController = {
         isOfficial,
         isTeam,
         year,
+        replayPostUrl,
       });
       res.status(201).json(tournament);
     } catch (error) {

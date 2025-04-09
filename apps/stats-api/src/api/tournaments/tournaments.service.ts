@@ -45,10 +45,13 @@ const createMatchWithGame = async ({
   let stage: string | null = null;
   const roundNameLower = roundName.toLowerCase();
 
-  if (roundNameLower.includes('semis') || roundNameLower.includes('finals')) {
-    stage = 'Playoff';
-  } else if (roundNameLower.includes('tiebreak')) {
+  if (roundNameLower.startsWith('tiebreak')) {
     stage = 'Tiebreak';
+  } else if (
+    roundNameLower.startsWith('semi') ||
+    roundNameLower.startsWith('final')
+  ) {
+    stage = 'Playoff';
   } else {
     stage = 'Regular Season';
   }

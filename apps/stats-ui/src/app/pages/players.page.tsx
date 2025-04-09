@@ -13,14 +13,7 @@ import {
   ClearFiltersButtonComponent,
   useFilterDropdown,
 } from '../components/filters/filter-dropdown';
-
-const StyledLink = styled.a`
-  color: #0066cc;
-  text-decoration: none;
-  &:hover {
-    text-decoration: underline;
-  }
-`;
+import { YearFilterComponent } from '../components/filters/year-filter';
 
 type SortColumn =
   | 'name'
@@ -35,8 +28,8 @@ type FilterValue = {
 };
 
 export function PlayersPage() {
-  const [startYear, setStartYear] = useState<number | ''>('');
-  const [endYear, setEndYear] = useState<number | ''>('');
+  const [startYear, setStartYear] = useState<string>('');
+  const [endYear, setEndYear] = useState<string>('');
   const [filters, setFilters] = useState<Record<string, FilterValue>>({});
 
   // Use the shared filter hook for generations
@@ -74,8 +67,8 @@ export function PlayersPage() {
   } = useGetPlayersQuery({
     generation: generations.length > 0 ? generations.join(',') : undefined,
     tier: tiers.length > 0 ? tiers.join(',') : undefined,
-    startYear: startYear || undefined,
-    endYear: endYear || undefined,
+    startYear: startYear ? parseInt(startYear, 10) : undefined,
+    endYear: endYear ? parseInt(endYear, 10) : undefined,
     stage: stages.length > 0 ? stages.join(',') : undefined,
   });
   const [sortColumn, setSortColumn] = useState<SortColumn>('matcheswon');
@@ -141,6 +134,20 @@ export function PlayersPage() {
     setFilters({});
   };
 
+  const handleStartYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '' || /^\d{0,4}$/.test(value)) {
+      setStartYear(value);
+    }
+  };
+
+  const handleEndYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '' || /^\d{0,4}$/.test(value)) {
+      setEndYear(value);
+    }
+  };
+
   const filteredAndSortedPlayers = [...(players || [])]
     .filter((player: Player) => {
       // First check if the player has any matches in the selected format
@@ -148,6 +155,17 @@ export function PlayersPage() {
         if (player.matchesWon + player.matchesLost + player.deadGames === 0) {
           return false;
         }
+      }
+
+      // Apply year filters if they are set
+      if (startYear || endYear) {
+        // If we have year filters but no player matches, filter them out
+        if (player.matchesWon + player.matchesLost + player.deadGames === 0) {
+          return false;
+        }
+
+        // The API already filters by year, so we don't need to do additional filtering here
+        // The players returned from the API should already match the year criteria
       }
 
       // Then apply the column filters
@@ -253,6 +271,13 @@ export function PlayersPage() {
           onChange={handleStageChange}
           isOpen={openStageFilter === 'stage'}
           onToggle={() => toggleStageFilter('stage')}
+        />
+
+        <YearFilterComponent
+          startYear={startYear}
+          endYear={endYear}
+          onStartYearChange={handleStartYearChange}
+          onEndYearChange={handleEndYearChange}
         />
 
         <ClearFiltersButtonComponent onClick={handleClearFilters} />

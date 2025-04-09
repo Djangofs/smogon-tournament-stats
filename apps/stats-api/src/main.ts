@@ -3,60 +3,54 @@ import * as path from 'path';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 
-import {
-  getAllTournamentsRoute,
-  createTournamentRoute,
-  getTournamentByIdRoute,
-} from './api/tournaments/tournaments.route';
+import { tournamentsRouter } from './api/tournaments/tournaments.route';
 import {
   getAllPlayersRoute,
   linkPlayerRecordsRoute,
   getPlayerByIdRoute,
 } from './api/player/player.route';
 import { getMatchByIdRoute } from './api/match/match.route';
+import { requireAdminRole } from './middleware/auth.middleware';
 import logger from './utils/logger';
 
 const app = express();
+
+// Middleware
 app.use(cors());
 app.use(bodyParser.json());
-
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
+// Health check route
 app.get('/api', (req, res) => {
   res.send({ message: 'Welcome to stats-api!' });
 });
 
-app.get('/tournaments/:id', async (req, res) => {
-  return getTournamentByIdRoute(req, res);
-});
+// API Routes
+app.use('/api/tournaments', tournamentsRouter);
 
-app.get('/tournaments', async (req, res) => {
-  return getAllTournamentsRoute(req, res);
-});
+// Public GET routes
+app.get('/api/players', getAllPlayersRoute);
+app.get('/api/players/:id', getPlayerByIdRoute);
+app.get('/api/matches/:id', getMatchByIdRoute);
 
-app.post('/tournament', async (req, res, next) => {
-  try {
-    await createTournamentRoute(req, res);
-  } catch (err) {
-    next(err);
+// Protected routes - require admin role
+app.post('/api/players/link', requireAdminRole, linkPlayerRecordsRoute);
+
+// Error handling middleware
+app.use(
+  (
+    err: Error,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    logger.error('Unhandled error:', err);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'An unexpected error occurred',
+    });
   }
-});
-
-app.get('/players', async (req, res) => {
-  return getAllPlayersRoute(req, res);
-});
-
-app.get('/players/:id', async (req, res) => {
-  return getPlayerByIdRoute(req, res);
-});
-
-app.post('/players/link', async (req, res) => {
-  return linkPlayerRecordsRoute(req, res);
-});
-
-app.get('/matches/:id', async (req, res) => {
-  return getMatchByIdRoute(req, res);
-});
+);
 
 const port = process.env.PORT || 3333;
 const server = app.listen(port, () => {

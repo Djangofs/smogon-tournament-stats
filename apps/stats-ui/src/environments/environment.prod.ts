@@ -5,6 +5,6 @@ export const environment: Environment = {
   auth0: {
     domain: '',
     clientId: '',
-    audience: '',
+    audience: 'https://stats-api',
   },
 };

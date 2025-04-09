@@ -1,42 +1,81 @@
-import { Request, Response } from 'express';
+import { Request, Response, Router } from 'express';
 import { getAllTournaments, createTournament } from './tournaments.service';
 import { TournamentDTO } from './tournaments.model';
 import { tournamentsController } from './tournaments.controller';
+import { requireAdminRole } from '../../middleware/auth.middleware';
 
-export const getAllTournamentsRoute = async (req: Request, res: Response) => {
-  const tournaments = await getAllTournamentsController();
+const router = Router();
 
-  res.send(tournaments);
-};
+// Public routes - no authentication required
+router.get('/', getAllTournamentsRoute);
+router.get('/:id', getTournamentByIdRoute);
 
-export const getTournamentByIdRoute = async (req: Request, res: Response) => {
-  return tournamentsController.getTournamentById(req, res);
-};
+// Protected routes - require admin role
+router.post('/', requireAdminRole, createTournamentRoute);
 
-const getAllTournamentsController = async (): Promise<TournamentDTO[]> => {
-  const tournaments = await getAllTournaments();
+export const tournamentsRouter = router;
 
-  return tournaments;
-};
+// Route handlers
+async function getAllTournamentsRoute(req: Request, res: Response) {
+  try {
+    const tournaments = await getAllTournamentsController();
+    res.send(tournaments);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to fetch tournaments',
+    });
+  }
+}
 
-export const createTournamentRoute = async (req: Request, res: Response) => {
-  const { name, sheetName, sheetId, isOfficial, isTeam, year, replayPostUrl } =
-    req.body;
+async function getTournamentByIdRoute(req: Request, res: Response) {
+  try {
+    return await tournamentsController.getTournamentById(req, res);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to fetch tournament',
+    });
+  }
+}
 
-  const tournament = await createTournamentController({
-    name,
-    sheetName,
-    sheetId,
-    isOfficial,
-    isTeam,
-    year,
-    replayPostUrl,
-  });
+async function createTournamentRoute(req: Request, res: Response) {
+  try {
+    const {
+      name,
+      sheetName,
+      sheetId,
+      isOfficial,
+      isTeam,
+      year,
+      replayPostUrl,
+    } = req.body;
 
-  res.send(tournament);
-};
+    const tournament = await createTournamentController({
+      name,
+      sheetName,
+      sheetId,
+      isOfficial,
+      isTeam,
+      year,
+      replayPostUrl,
+    });
 
-const createTournamentController = async ({
+    res.status(201).send(tournament);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to create tournament',
+    });
+  }
+}
+
+// Controller functions
+async function getAllTournamentsController(): Promise<TournamentDTO[]> {
+  return await getAllTournaments();
+}
+
+async function createTournamentController({
   name,
   sheetName,
   sheetId,
@@ -52,8 +91,8 @@ const createTournamentController = async ({
   isTeam: boolean;
   year: number;
   replayPostUrl?: string;
-}) => {
-  const tournament = await createTournament({
+}) {
+  return await createTournament({
     name,
     sheetName,
     sheetId,
@@ -62,6 +101,4 @@ const createTournamentController = async ({
     year,
     replayPostUrl,
   });
-
-  return tournament;
-};
+}

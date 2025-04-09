@@ -10,6 +10,7 @@ const createGame = async ({
   generation,
   tier,
   playedAt,
+  replayUrl,
 }: {
   matchId: string;
   player1Id: string;
@@ -18,6 +19,7 @@ const createGame = async ({
   generation: string;
   tier: string;
   playedAt: Date;
+  replayUrl?: string;
 }) => {
   return client.game.create({
     data: {
@@ -25,6 +27,7 @@ const createGame = async ({
       generation,
       tier,
       playedAt,
+      replayUrl,
     },
   });
 };

@@ -3,19 +3,22 @@ import { configureStore } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { tournamentsApi } from './apis/tournaments.api';
 import { playersApi } from './apis/players.api';
+import { matchesApi } from './apis/matches.api';
 
 export const store = configureStore({
   reducer: {
     // Add the generated reducer as a specific top-level slice
     [tournamentsApi.reducerPath]: tournamentsApi.reducer,
     [playersApi.reducerPath]: playersApi.reducer,
+    [matchesApi.reducerPath]: matchesApi.reducer,
   },
   // Adding the api middleware enables caching, invalidation, polling,
   // and other useful features of `rtk-query`.
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
       tournamentsApi.middleware,
-      playersApi.middleware
+      playersApi.middleware,
+      matchesApi.middleware
     ),
 });
 

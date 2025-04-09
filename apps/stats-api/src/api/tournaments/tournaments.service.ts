@@ -5,7 +5,7 @@ import { createTeam, createTournamentTeam } from '../team/team.service';
 import { createRound } from '../round/round.service';
 import { createMatch, createPlayerMatch } from '../match/match.service';
 import { createGame } from '../game/game.service';
-import { extractTournamentData } from '../extraction/extraction.service';
+import { extractTournamentData, extractReplays } from '../extraction';
 import logger from '../../utils/logger';
 
 interface TournamentPlayer {
@@ -31,6 +31,7 @@ const createMatchWithGame = async ({
   tier,
   tournamentYear,
   roundName,
+  replayUrl,
 }: {
   roundId: string;
   currentPlayer: TournamentPlayer;
@@ -40,19 +41,25 @@ const createMatchWithGame = async ({
   tier: string;
   tournamentYear: number;
   roundName: string;
+  replayUrl?: string;
 }) => {
   // Determine the stage based on the round name
   let stage: string | null = null;
   const roundNameLower = roundName.toLowerCase();
 
+  // First check for tiebreak matches, as they take precedence
   if (roundNameLower.startsWith('tiebreak')) {
     stage = 'Tiebreak';
-  } else if (
+  }
+  // Then check for playoff matches (semifinals, finals)
+  else if (
     roundNameLower.startsWith('semi') ||
     roundNameLower.startsWith('final')
   ) {
     stage = 'Playoff';
-  } else {
+  }
+  // All other matches are considered regular season
+  else {
     stage = 'Regular Season';
   }
 
@@ -79,6 +86,7 @@ const createMatchWithGame = async ({
       generation,
       tier,
       playedAt: new Date(tournamentYear, 0, 1), // January 1st of tournament year
+      replayUrl,
     });
   }
 
@@ -171,6 +179,17 @@ export const createTournament = async ({
     sheetId,
   });
 
+  // Extract replays if replayPostUrl is provided
+  let replays: { player1: string; player2: string; replayUrl: string }[] = [];
+  if (replayPostUrl) {
+    try {
+      replays = await extractReplays(replayPostUrl);
+      logger.info(`Extracted ${replays.length} replays from ${replayPostUrl}`);
+    } catch (error) {
+      logger.error(`Failed to extract replays from ${replayPostUrl}:`, error);
+    }
+  }
+
   // Make any new teams
   const teamPromises = tournamentData.teams.map((team) =>
     createTeam({ name: team.name })
@@ -236,6 +255,19 @@ export const createTournament = async ({
         );
         if (!player2) return null;
 
+        // Find a matching replay for this match
+        const replayIndex = replays.findIndex(
+          (r) =>
+            (r.player1 === match.player1 && r.player2 === match.player2) ||
+            (r.player1 === match.player2 && r.player2 === match.player1)
+        );
+
+        // Get the replay if found and remove it from the array
+        const replay = replayIndex !== -1 ? replays[replayIndex] : undefined;
+        if (replayIndex !== -1) {
+          replays.splice(replayIndex, 1);
+        }
+
         return createMatchWithGame({
           roundId: roundRecord.id,
           currentPlayer: player1,
@@ -250,6 +282,7 @@ export const createTournament = async ({
           tier: match.tier,
           tournamentYear: year,
           roundName: round.name,
+          replayUrl: replay?.replayUrl,
         });
       });
 

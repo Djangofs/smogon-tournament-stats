@@ -77,7 +77,15 @@ const getMatch = async ({ matchId }: { matchId: string }) => {
       id: matchId,
     },
     include: {
-      games: true,
+      games: {
+        include: {
+          players: {
+            include: {
+              player: true,
+            },
+          },
+        },
+      },
       players: {
         include: {
           player: true,

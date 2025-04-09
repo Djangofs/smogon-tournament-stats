@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useGetPlayerByIdQuery } from '../store/apis/players.api';
 import { Container } from '../components/layout/layout';
 import { Table } from '../components/table/table';
@@ -56,7 +56,8 @@ const TableRow = styled.tr`
     background-color: #f8f9fa;
   }
   &:hover {
-    background-color: #f1f3f5;
+    background-color: #f5f5f5;
+    cursor: pointer;
   }
 `;
 
@@ -465,7 +466,10 @@ export function PlayerDetailPage() {
         initialSortDirection="desc"
       >
         {filteredMatches.map((match) => (
-          <TableRow key={match.id}>
+          <TableRow
+            key={match.id}
+            onClick={() => (window.location.href = `/matches/${match.id}`)}
+          >
             <TableCell>{match.date}</TableCell>
             <TableCell>{match.opponent}</TableCell>
             <TableCell>

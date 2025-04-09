@@ -13,6 +13,7 @@ import {
   linkPlayerRecordsRoute,
   getPlayerByIdRoute,
 } from './api/player/player.route';
+import { getMatchByIdRoute } from './api/match/match.route';
 import logger from './utils/logger';
 
 const app = express();
@@ -51,6 +52,10 @@ app.get('/players/:id', async (req, res) => {
 
 app.post('/players/link', async (req, res) => {
   return linkPlayerRecordsRoute(req, res);
+});
+
+app.get('/matches/:id', async (req, res) => {
+  return getMatchByIdRoute(req, res);
 });
 
 const port = process.env.PORT || 3333;

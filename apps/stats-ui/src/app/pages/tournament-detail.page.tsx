@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useGetTournamentByIdQuery } from '../store/apis/tournaments.api';
 import { Container, TournamentHighlight } from '../components/layout/layout';
 import { Card } from '../components/card/card';
@@ -62,11 +62,23 @@ const MatchesList = styled.div`
   margin: 0 auto;
 `;
 
-const MatchItem = styled(TournamentHighlight)`
+const StyledMatchItem = styled.a`
+  display: block;
   padding: 0.5rem;
   border-radius: 4px;
   border-bottom: none;
   text-align: center;
+  text-decoration: none;
+  color: #333;
+  transition: all 0.2s ease;
+  background-color: transparent;
+
+  &:hover {
+    background-color: #f5f5f5;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    color: #333;
+  }
 `;
 
 const TeamSection = styled.div`
@@ -83,7 +95,7 @@ const TeamTitle = styled.div`
 
 const Winner = styled.span`
   font-weight: 600;
-  color: #0066cc;
+  color: #333;
 `;
 
 const TeamMatchup = styled.div`
@@ -305,27 +317,33 @@ export function TournamentDetailPage() {
                           const isPlayer1Winner = player1?.winner;
 
                           return (
-                            <MatchItem key={match.id}>
-                              <MatchTitle>
-                                <MatchFormat>
-                                  {match.generation} {match.tier}:
-                                </MatchFormat>
-                                {isPlayer1Winner ? (
-                                  <Winner>{player1?.player.name}</Winner>
-                                ) : (
-                                  player1?.player.name
-                                )}{' '}
-                                vs{' '}
-                                {!isPlayer1Winner ? (
-                                  <Winner>{player2?.player.name}</Winner>
-                                ) : (
-                                  player2?.player.name
-                                )}
-                              </MatchTitle>
-                              <MatchResult>
-                                <span>{match.result}</span>
-                              </MatchResult>
-                            </MatchItem>
+                            <Link
+                              key={match.id}
+                              to={`/matches/${match.id}`}
+                              style={{ textDecoration: 'none' }}
+                            >
+                              <StyledMatchItem>
+                                <MatchTitle>
+                                  <MatchFormat>
+                                    {match.generation} {match.tier}:
+                                  </MatchFormat>
+                                  {isPlayer1Winner ? (
+                                    <Winner>{player1?.player.name}</Winner>
+                                  ) : (
+                                    player1?.player.name
+                                  )}{' '}
+                                  vs{' '}
+                                  {!isPlayer1Winner ? (
+                                    <Winner>{player2?.player.name}</Winner>
+                                  ) : (
+                                    player2?.player.name
+                                  )}
+                                </MatchTitle>
+                                <MatchResult>
+                                  <span>{match.result}</span>
+                                </MatchResult>
+                              </StyledMatchItem>
+                            </Link>
                           );
                         })}
                     </TeamMatchup>

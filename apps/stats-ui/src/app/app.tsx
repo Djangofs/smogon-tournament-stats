@@ -7,6 +7,7 @@ import { HomePage } from './pages/home.page';
 import { PlayersPage } from './pages/players.page';
 import { TournamentDetailPage } from './pages/tournament-detail.page';
 import { PlayerDetailPage } from './pages/player-detail.page';
+import { MatchDetailPage } from './pages/match-detail.page';
 import { store } from './store/store';
 import { Nav } from './components/navigation';
 
@@ -36,6 +37,7 @@ function AppContent() {
           <Route path="/tournaments/:id" element={<TournamentDetailPage />} />
           <Route path="/players" element={<PlayersPage />} />
           <Route path="/players/:id" element={<PlayerDetailPage />} />
+          <Route path="/matches/:id" element={<MatchDetailPage />} />
         </Routes>
       </MainContent>
     </StyledApp>

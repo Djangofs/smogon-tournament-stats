@@ -18,6 +18,7 @@ import {
   ClearFiltersButtonComponent,
   useFilterDropdown,
 } from '../components/filters/filter-dropdown';
+import { YearFilterComponent } from '../components/filters/year-filter';
 
 const StatsContainer = styled.div`
   display: grid;
@@ -162,7 +163,8 @@ export function PlayerDetailPage() {
     error,
   } = useGetPlayerByIdQuery(id || '');
 
-  const [dateTextInput, setDateTextInput] = useState('');
+  const [startYear, setStartYear] = useState<string>('');
+  const [endYear, setEndYear] = useState<string>('');
   const [opponentTextInput, setOpponentTextInput] = useState('');
 
   // Use the shared filter hook for result
@@ -232,8 +234,23 @@ export function PlayerDetailPage() {
     setSortDirection(direction);
   };
 
+  const handleStartYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '' || /^\d{0,4}$/.test(value)) {
+      setStartYear(value);
+    }
+  };
+
+  const handleEndYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '' || /^\d{0,4}$/.test(value)) {
+      setEndYear(value);
+    }
+  };
+
   const handleClearFilters = () => {
-    setDateTextInput('');
+    setStartYear('');
+    setEndYear('');
     setOpponentTextInput('');
     clearResultFilter();
     clearGenerations();
@@ -243,10 +260,10 @@ export function PlayerDetailPage() {
 
   const filteredMatches = matches
     .filter((match) => {
-      // Filter by date
-      const dateMatch =
-        !dateTextInput ||
-        match.date.toLowerCase().includes(dateTextInput.toLowerCase());
+      // Filter by year range
+      const matchYear = new Date(match.date).getFullYear();
+      const startYearMatch = !startYear || matchYear >= parseInt(startYear, 10);
+      const endYearMatch = !endYear || matchYear <= parseInt(endYear, 10);
 
       // Filter by opponent
       const opponentMatch =
@@ -267,7 +284,8 @@ export function PlayerDetailPage() {
         stages.length === 0 || stages.includes(match.stage || '');
 
       return (
-        dateMatch &&
+        startYearMatch &&
+        endYearMatch &&
         opponentMatch &&
         resultMatch &&
         generationMatch &&
@@ -330,12 +348,12 @@ export function PlayerDetailPage() {
 
         <FilterGrid>
           <FilterItem>
-            <FilterTextLabel>Date</FilterTextLabel>
-            <FilterTextInput
-              type="text"
-              placeholder="Filter by date..."
-              value={dateTextInput}
-              onChange={(e) => setDateTextInput(e.target.value)}
+            <FilterTextLabel>Year</FilterTextLabel>
+            <YearFilterComponent
+              startYear={startYear}
+              endYear={endYear}
+              onStartYearChange={handleStartYearChange}
+              onEndYearChange={handleEndYearChange}
             />
           </FilterItem>
 

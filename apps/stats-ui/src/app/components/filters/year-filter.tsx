@@ -15,12 +15,6 @@ const YearFilterContainer = styled.div<{ isActive?: boolean }>`
   cursor: help;
 `;
 
-const YearFilterLabel = styled.div`
-  font-size: 0.9rem;
-  color: #666;
-  white-space: nowrap;
-`;
-
 const YearFilterInput = styled.input`
   padding: 0.75rem 1rem;
   border-radius: 6px;
@@ -93,7 +87,6 @@ export function YearFilterComponent({
 }: YearFilterProps) {
   return (
     <YearFilterContainer isActive={!!(startYear || endYear)}>
-      <YearFilterLabel>Year:</YearFilterLabel>
       <YearFilterInput
         type="text"
         placeholder="From"

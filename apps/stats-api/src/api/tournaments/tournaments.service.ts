@@ -30,6 +30,7 @@ const createMatchWithGame = async ({
   generation,
   tier,
   tournamentYear,
+  roundName,
 }: {
   roundId: string;
   currentPlayer: TournamentPlayer;
@@ -38,7 +39,20 @@ const createMatchWithGame = async ({
   generation: string;
   tier: string;
   tournamentYear: number;
+  roundName: string;
 }) => {
+  // Determine the stage based on the round name
+  let stage: string | null = null;
+  const roundNameLower = roundName.toLowerCase();
+
+  if (roundNameLower.includes('semis') || roundNameLower.includes('finals')) {
+    stage = 'Playoff';
+  } else if (roundNameLower.includes('tiebreak')) {
+    stage = 'Tiebreak';
+  } else {
+    stage = 'Regular Season';
+  }
+
   // Create the match
   const newMatch = await createMatch({
     roundId,
@@ -48,6 +62,7 @@ const createMatchWithGame = async ({
     generation,
     tier,
     playedAt: new Date(tournamentYear, 0, 1), // January 1st of tournament year
+    stage,
   });
 
   // Only create a game if it's not a dead game
@@ -231,6 +246,7 @@ export const createTournament = async ({
           generation: match.generation,
           tier: match.tier,
           tournamentYear: year,
+          roundName: round.name,
         });
       });
 

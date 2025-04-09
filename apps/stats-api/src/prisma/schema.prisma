@@ -54,6 +54,7 @@ model Match {
   generation   String
   tier         String
   playedAt     DateTime?
+  stage        String?  // Can be "Regular Season", "Playoff", or "Tiebreak"
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

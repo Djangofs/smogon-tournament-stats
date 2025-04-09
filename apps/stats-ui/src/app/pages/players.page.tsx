@@ -52,6 +52,7 @@ export function PlayersPage() {
   const [tier, setTier] = useState<Tier | ''>('');
   const [startYear, setStartYear] = useState<number | ''>('');
   const [endYear, setEndYear] = useState<number | ''>('');
+  const [stage, setStage] = useState<string>('');
   const {
     data: players,
     isLoading,
@@ -62,6 +63,7 @@ export function PlayersPage() {
     tier: tier || undefined,
     startYear: startYear || undefined,
     endYear: endYear || undefined,
+    stage: stage || undefined,
   });
   const [sortColumn, setSortColumn] = useState<SortColumn>('matcheswon');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -232,6 +234,16 @@ export function PlayersPage() {
                 {t}
               </option>
             ))}
+          </Select>
+        </FilterLabel>
+
+        <FilterLabel>
+          Stage:
+          <Select value={stage} onChange={(e) => setStage(e.target.value)}>
+            <option value="">All Stages</option>
+            <option value="Regular Season">Regular Season</option>
+            <option value="Playoff">Playoff</option>
+            <option value="Tiebreak">Tiebreak</option>
           </Select>
         </FilterLabel>
       </FilterContainer>

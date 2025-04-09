@@ -13,11 +13,13 @@ const getAllPlayers = async ({
   tier,
   startYear,
   endYear,
+  stage,
 }: {
   generation?: string;
   tier?: string;
   startYear?: number;
   endYear?: number;
+  stage?: string;
 } = {}) => {
   return client.player.findMany({
     include: {
@@ -26,6 +28,7 @@ const getAllPlayers = async ({
           match: {
             ...(generation && { generation }),
             ...(tier && { tier }),
+            ...(stage && { stage }),
             ...((startYear || endYear) && {
               round: {
                 tournament: {
@@ -44,6 +47,7 @@ const getAllPlayers = async ({
             select: {
               generation: true,
               tier: true,
+              stage: true,
               round: {
                 select: {
                   tournament: {

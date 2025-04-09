@@ -8,12 +8,13 @@ import logger from '../../utils/logger';
 
 export const getAllPlayersRoute = async (req: Request, res: Response) => {
   try {
-    const { generation, tier, startYear, endYear } = req.query;
+    const { generation, tier, startYear, endYear, stage } = req.query;
     const players = await getAllPlayers({
       generation: generation as string | undefined,
       tier: tier as string | undefined,
       startYear: startYear ? parseInt(startYear as string) : undefined,
       endYear: endYear ? parseInt(endYear as string) : undefined,
+      stage: stage as string | undefined,
     });
     res.send(players);
   } catch (error) {

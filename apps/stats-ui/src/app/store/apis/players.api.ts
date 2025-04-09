@@ -6,6 +6,7 @@ export interface PlayerMatch {
   winner: boolean | null;
   generation: string;
   tier: string;
+  stage: string | null;
   year: number;
   tournamentName: string;
   opponentName: string;
@@ -29,6 +30,7 @@ export interface GetPlayersQueryParams {
   tier?: string;
   startYear?: number;
   endYear?: number;
+  stage?: string;
 }
 
 export const playersApi = createApi({

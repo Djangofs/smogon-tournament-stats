@@ -14,6 +14,7 @@ interface PlayerMatch {
   winner: boolean | null;
   generation: string;
   tier: string;
+  stage: string | null;
   year: number;
   tournamentName: string;
   opponentName: string;
@@ -39,17 +40,20 @@ export const getAllPlayers = async ({
   tier,
   startYear,
   endYear,
+  stage,
 }: {
   generation?: string;
   tier?: string;
   startYear?: number;
   endYear?: number;
+  stage?: string;
 } = {}): Promise<PlayerWithStats[]> => {
   const players = await playerData.getAllPlayers({
     generation,
     tier,
     startYear,
     endYear,
+    stage,
   });
 
   return players.map((player) => {
@@ -191,6 +195,7 @@ export const getPlayerById = async (id: string): Promise<PlayerDetails> => {
       winner: match.winner,
       generation: match.match.generation,
       tier: match.match.tier,
+      stage: match.match.stage,
       year: match.match.round.tournament.year,
       tournamentName: match.match.round.tournament.name,
       opponentName: opponent?.player.name || 'Unknown',

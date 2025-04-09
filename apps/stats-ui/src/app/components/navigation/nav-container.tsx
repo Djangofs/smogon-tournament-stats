@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { NavBrand } from './nav-brand';
 import { NavLinks } from './nav-links';
+import { LoginButton } from '../../auth/LoginButton';
 
 const StyledNavContainer = styled.div`
   max-width: 1200px;
@@ -10,6 +11,12 @@ const StyledNavContainer = styled.div`
   align-items: center;
 `;
 
+const NavRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
 interface NavContainerProps {
   currentPath: string;
 }
@@ -17,6 +24,9 @@ interface NavContainerProps {
 export const NavContainer = ({ currentPath }: NavContainerProps) => (
   <StyledNavContainer>
     <NavBrand />
-    <NavLinks currentPath={currentPath} />
+    <NavRight>
+      <NavLinks currentPath={currentPath} />
+      <LoginButton />
+    </NavRight>
   </StyledNavContainer>
 );

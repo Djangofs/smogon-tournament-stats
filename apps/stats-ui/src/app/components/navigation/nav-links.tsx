@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { NavLink } from './nav-link';
+import { useAuth0 } from '@auth0/auth0-react';
 
 const StyledNavLinks = styled.nav`
   display: flex;
@@ -7,6 +8,8 @@ const StyledNavLinks = styled.nav`
 `;
 
 export function NavLinks({ currentPath }: { currentPath: string }) {
+  const { isAuthenticated } = useAuth0();
+
   return (
     <StyledNavLinks>
       <NavLink to="/" active={currentPath === '/'}>
@@ -18,6 +21,11 @@ export function NavLinks({ currentPath }: { currentPath: string }) {
       <NavLink to="/players" active={currentPath === '/players'}>
         Players
       </NavLink>
+      {isAuthenticated && (
+        <NavLink to="/profile" active={currentPath === '/profile'}>
+          Profile
+        </NavLink>
+      )}
     </StyledNavLinks>
   );
 }

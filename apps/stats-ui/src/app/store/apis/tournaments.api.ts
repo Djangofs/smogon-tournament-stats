@@ -1,11 +1,11 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi } from '@reduxjs/toolkit/query/react';
 import { Tournament, CreateTournamentRequest } from '../../types/tournament';
-import { environment } from '../../../environments/environment';
+import { baseQueryWithAuth } from './baseQueryWithAuth';
 
 // Define a service using a base URL and expected endpoints
 export const tournamentsApi = createApi({
   reducerPath: 'tournamentsApi',
-  baseQuery: fetchBaseQuery({ baseUrl: environment.apiUrl }),
+  baseQuery: baseQueryWithAuth,
   tagTypes: ['Tournaments'],
   endpoints: (builder) => ({
     getTournaments: builder.query<Tournament[], void>({

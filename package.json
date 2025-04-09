@@ -8,6 +8,7 @@
   },
   "private": true,
   "dependencies": {
+    "@auth0/auth0-react": "^2.3.0",
     "@prisma/client": "^6.1.0",
     "@reduxjs/toolkit": "^2.5.0",
     "@types/winston": "^2.4.4",

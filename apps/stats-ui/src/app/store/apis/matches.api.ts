@@ -1,5 +1,5 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { environment } from '../../../environments/environment';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { baseQueryWithAuth } from './baseQueryWithAuth';
 
 export interface Game {
   id: string;
@@ -37,17 +37,29 @@ export interface Match {
   }[];
 }
 
+export interface GetMatchesQueryParams {
+  tournamentId?: string;
+  playerId?: string;
+}
+
 // Define a service using a base URL and expected endpoints
 export const matchesApi = createApi({
   reducerPath: 'matchesApi',
-  baseQuery: fetchBaseQuery({ baseUrl: environment.apiUrl }),
+  baseQuery: baseQueryWithAuth,
   tagTypes: ['Matches'],
   endpoints: (builder) => ({
+    getMatches: builder.query<Match[], GetMatchesQueryParams>({
+      query: (params) => ({
+        url: 'matches',
+        params,
+      }),
+      providesTags: ['Matches'],
+    }),
     getMatchById: builder.query<Match, string>({
       query: (id) => `matches/${id}`,
-      providesTags: (result, error, id) => [{ type: 'Matches', id }],
     }),
   }),
 });
 
-export const { useGetMatchByIdQuery } = matchesApi;
+// Export hooks for usage in components
+export const { useGetMatchesQuery, useGetMatchByIdQuery } = matchesApi;

@@ -1,47 +1,42 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { environment } from '../../../environments/environment';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { baseQueryWithAuth } from './baseQueryWithAuth';
 
 export interface PlayerMatch {
   id: string;
-  winner: boolean | null;
-  generation: string;
-  tier: string;
-  stage: string | null;
-  year: number;
+  tournamentId: string;
   tournamentName: string;
-  opponentName: string;
-  opponentId: string;
+  round: string;
+  opponent: string;
+  result: string;
+  replay?: string;
 }
 
 export interface Player {
   id: string;
   name: string;
-  matchesWon: number;
-  matchesLost: number;
-  deadGames: number;
+  matches?: PlayerMatch[];
+}
+
+export interface GetPlayersQueryParams {
+  tournamentId?: string;
 }
 
 export interface PlayerDetails extends Player {
   matches: PlayerMatch[];
 }
 
-export interface GetPlayersQueryParams {
-  generation?: string;
-  tier?: string;
-  startYear?: number;
-  endYear?: number;
-  stage?: string;
-}
-
+// Define a service using a base URL and expected endpoints
 export const playersApi = createApi({
   reducerPath: 'playersApi',
-  baseQuery: fetchBaseQuery({ baseUrl: environment.apiUrl }),
+  baseQuery: baseQueryWithAuth,
+  tagTypes: ['Players'],
   endpoints: (builder) => ({
     getPlayers: builder.query<Player[], GetPlayersQueryParams>({
       query: (params) => ({
         url: 'players',
         params,
       }),
+      providesTags: ['Players'],
     }),
     getPlayerById: builder.query<PlayerDetails, string>({
       query: (id) => `players/${id}`,
@@ -49,4 +44,5 @@ export const playersApi = createApi({
   }),
 });
 
+// Export hooks for usage in components
 export const { useGetPlayersQuery, useGetPlayerByIdQuery } = playersApi;

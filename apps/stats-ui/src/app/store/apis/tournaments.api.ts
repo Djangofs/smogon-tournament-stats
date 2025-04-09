@@ -17,7 +17,7 @@ export const tournamentsApi = createApi({
     }),
     createTournament: builder.mutation<Tournament, CreateTournamentRequest>({
       query: (tournament) => ({
-        url: 'tournament',
+        url: 'tournaments',
         method: 'POST',
         body: tournament,
       }),

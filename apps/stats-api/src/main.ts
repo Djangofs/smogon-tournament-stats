@@ -26,15 +26,15 @@ app.get('/api', (req, res) => {
 });
 
 // API Routes
-app.use('/api/tournaments', tournamentsRouter);
+app.use('/tournaments', tournamentsRouter);
 
 // Public GET routes
-app.get('/api/players', getAllPlayersRoute);
-app.get('/api/players/:id', getPlayerByIdRoute);
-app.get('/api/matches/:id', getMatchByIdRoute);
+app.get('/players', getAllPlayersRoute);
+app.get('/players/:id', getPlayerByIdRoute);
+app.get('/matches/:id', getMatchByIdRoute);
 
 // Protected routes - require admin role
-app.post('/api/players/link', requireAdminRole, linkPlayerRecordsRoute);
+app.post('/players/link', requireAdminRole, linkPlayerRecordsRoute);
 
 // Error handling middleware
 app.use(

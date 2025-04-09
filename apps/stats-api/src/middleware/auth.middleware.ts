@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { auth } from 'express-oauth2-jwt-bearer';
 import { UnauthorizedError } from 'express-oauth2-jwt-bearer';
+import logger from '../utils/logger';
 
 // Initialize Auth0 middleware
 const validateAuth0Token = auth({
-  audience: process.env['AUTH0_AUDIENCE'],
+  audience: 'https://stats-api',
   issuerBaseURL: `https://${process.env['AUTH0_DOMAIN']}/`,
   tokenSigningAlg: 'RS256',
 });
@@ -26,6 +27,7 @@ export const requireAdminRole = async (
     await new Promise<void>((resolve, reject) => {
       validateAuth0Token(req, res, (err) => {
         if (err) {
+          logger.error('Error validating token', err);
           reject(err);
         } else {
           resolve();

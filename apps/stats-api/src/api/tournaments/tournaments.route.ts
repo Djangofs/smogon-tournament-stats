@@ -3,6 +3,7 @@ import { getAllTournaments, createTournament } from './tournaments.service';
 import { TournamentDTO } from './tournaments.model';
 import { tournamentsController } from './tournaments.controller';
 import { requireAdminRole } from '../../middleware/auth.middleware';
+import logger from '../../utils/logger';
 
 const router = Router();
 
@@ -21,6 +22,7 @@ async function getAllTournamentsRoute(req: Request, res: Response) {
     const tournaments = await getAllTournamentsController();
     res.send(tournaments);
   } catch (error) {
+    logger.error('Error fetching tournaments', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to fetch tournaments',

@@ -12,6 +12,12 @@ import {
   Generation,
   Tier,
 } from '@smogon-tournament-stats/shared-constants';
+import {
+  FilterContainerComponent,
+  FilterDropdownComponent,
+  ClearFiltersButtonComponent,
+  useFilterDropdown,
+} from '../components/filters/filter-dropdown';
 
 const StatsContainer = styled.div`
   display: grid;
@@ -61,42 +67,59 @@ const FilterContainer = styled.div`
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
+const FilterHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+`;
+
+const FilterTitle = styled.h3`
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+`;
+
 const FilterGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+
+  @media (max-width: 992px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 576px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
 `;
 
-const FilterGroup = styled.div`
+const FilterItem = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  width: 100%;
+  margin-bottom: 0.5rem;
 `;
 
-const FilterLabel = styled.label`
-  font-size: 0.875rem;
-  color: #666;
-`;
-
-const FilterInput = styled.input`
-  padding: 0.5rem;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  font-size: 0.875rem;
-
-  &:focus {
-    outline: none;
-    border-color: #0066cc;
-    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
-  }
-`;
-
-const FilterSelect = styled.select`
-  padding: 0.5rem;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  font-size: 0.875rem;
+const FilterTextInput = styled.input`
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #ddd;
   background-color: white;
+  color: #333;
+  font-size: 0.9rem;
+  width: 100%;
+  height: 42px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #999;
+    background-color: #f9f9f9;
+  }
 
   &:focus {
     outline: none;
@@ -105,12 +128,30 @@ const FilterSelect = styled.select`
   }
 `;
 
+const FilterTextLabel = styled.div`
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+`;
+
+const FilterActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+`;
+
+type SortColumn =
+  | 'Date'
+  | 'Opponent'
+  | 'Result'
+  | 'Generation'
+  | 'Tier'
+  | 'Stage';
+type SortDirection = 'asc' | 'desc';
 type FilterValue = {
   value: string;
 };
-
-type SortColumn = 'Date' | 'Opponent' | 'Result' | 'Generation' | 'Tier';
-type SortDirection = 'asc' | 'desc';
 
 export function PlayerDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -121,13 +162,48 @@ export function PlayerDetailPage() {
     error,
   } = useGetPlayerByIdQuery(id || '');
 
-  const [filters, setFilters] = useState<Record<string, FilterValue>>({
-    Date: { value: '' },
-    Opponent: { value: '' },
-    Result: { value: '' },
-    Generation: { value: '' },
-    Tier: { value: '' },
-  });
+  const [dateTextInput, setDateTextInput] = useState('');
+  const [opponentTextInput, setOpponentTextInput] = useState('');
+
+  // Use the shared filter hook for result
+  const {
+    selectedValues: resultFilter,
+    setSelectedValues: setResultFilter,
+    openFilter: openResultFilter,
+    toggleFilter: toggleResultFilter,
+    handleCheckboxChange: handleResultChange,
+    clearFilters: clearResultFilter,
+  } = useFilterDropdown<string>(['Won', 'Lost', 'Dead Game']);
+
+  // Use the shared filter hook for generations
+  const {
+    selectedValues: generations,
+    setSelectedValues: setGenerations,
+    openFilter: openGenerationFilter,
+    toggleFilter: toggleGenerationFilter,
+    handleCheckboxChange: handleGenerationChange,
+    clearFilters: clearGenerations,
+  } = useFilterDropdown<Generation>([...GENERATIONS]);
+
+  // Use the shared filter hook for tiers
+  const {
+    selectedValues: tiers,
+    setSelectedValues: setTiers,
+    openFilter: openTierFilter,
+    toggleFilter: toggleTierFilter,
+    handleCheckboxChange: handleTierChange,
+    clearFilters: clearTiers,
+  } = useFilterDropdown<Tier>([...TIERS]);
+
+  // Use the shared filter hook for stages
+  const {
+    selectedValues: stages,
+    setSelectedValues: setStages,
+    openFilter: openStageFilter,
+    toggleFilter: toggleStageFilter,
+    handleCheckboxChange: handleStageChange,
+    clearFilters: clearStages,
+  } = useFilterDropdown<string>(['Regular Season', 'Playoff', 'Tiebreak']);
 
   const [sortColumn, setSortColumn] = useState<SortColumn>('Date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -148,55 +224,67 @@ export function PlayerDetailPage() {
     generation: match.generation,
     tier: match.tier,
     winner: match.winner,
+    stage: match.stage,
   }));
-
-  const handleFilterChange = (column: string, value: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      [column]: { value },
-    }));
-  };
 
   const handleSort = (column: string, direction: SortDirection) => {
     setSortColumn(column as SortColumn);
     setSortDirection(direction);
   };
 
+  const handleClearFilters = () => {
+    setDateTextInput('');
+    setOpponentTextInput('');
+    clearResultFilter();
+    clearGenerations();
+    clearTiers();
+    clearStages();
+  };
+
   const filteredMatches = matches
     .filter((match) => {
-      return Object.entries(filters).every(([column, filter]) => {
-        if (!filter.value) return true;
+      // Filter by date
+      const dateMatch =
+        !dateTextInput ||
+        match.date.toLowerCase().includes(dateTextInput.toLowerCase());
 
-        const value = filter.value.toLowerCase();
-        switch (column) {
-          case 'Date':
-            return match.date.toLowerCase().includes(value);
-          case 'Opponent':
-            return match.opponent.toLowerCase().includes(value);
-          case 'Result':
-            if (value === 'dead game') {
-              return match.winner === null;
-            } else if (value === 'won') {
-              return match.winner === true;
-            } else if (value === 'lost') {
-              return match.winner === false;
-            }
-            return match.result.toLowerCase().includes(value);
-          case 'Generation':
-            return match.generation === filter.value;
-          case 'Tier':
-            return match.tier === filter.value;
-          default:
-            return true;
-        }
-      });
+      // Filter by opponent
+      const opponentMatch =
+        !opponentTextInput ||
+        match.opponent.toLowerCase().includes(opponentTextInput.toLowerCase());
+
+      // Filter by result
+      const resultMatch =
+        resultFilter.length === 0 || resultFilter.includes(match.result);
+
+      // Filter by dropdown selections
+      const generationMatch =
+        generations.length === 0 ||
+        generations.includes(match.generation as Generation);
+      const tierMatch =
+        tiers.length === 0 || tiers.includes(match.tier as Tier);
+      const stageMatch =
+        stages.length === 0 || stages.includes(match.stage || '');
+
+      return (
+        dateMatch &&
+        opponentMatch &&
+        resultMatch &&
+        generationMatch &&
+        tierMatch &&
+        stageMatch
+      );
     })
     .sort((a, b) => {
       const multiplier = sortDirection === 'asc' ? 1 : -1;
+      let stageA, stageB;
 
       switch (sortColumn) {
         case 'Date':
-          return multiplier * a.date.localeCompare(b.date);
+          return (
+            multiplier *
+            (new Date(a.date).getTime() - new Date(b.date).getTime())
+          );
         case 'Opponent':
           return multiplier * a.opponent.localeCompare(b.opponent);
         case 'Result':
@@ -205,6 +293,10 @@ export function PlayerDetailPage() {
           return multiplier * a.generation.localeCompare(b.generation);
         case 'Tier':
           return multiplier * a.tier.localeCompare(b.tier);
+        case 'Stage':
+          stageA = a.stage || '';
+          stageB = b.stage || '';
+          return multiplier * stageA.localeCompare(stageB);
         default:
           return 0;
       }
@@ -232,67 +324,91 @@ export function PlayerDetailPage() {
       <p>View detailed statistics and match history for {player.name}</p>
 
       <FilterContainer>
-        <h3>Filters</h3>
+        <FilterHeader>
+          <FilterTitle>Filters</FilterTitle>
+        </FilterHeader>
+
         <FilterGrid>
-          <FilterGroup>
-            <FilterLabel>Date</FilterLabel>
-            <FilterInput
+          <FilterItem>
+            <FilterTextLabel>Date</FilterTextLabel>
+            <FilterTextInput
               type="text"
               placeholder="Filter by date..."
-              value={filters.Date.value}
-              onChange={(e) => handleFilterChange('Date', e.target.value)}
+              value={dateTextInput}
+              onChange={(e) => setDateTextInput(e.target.value)}
             />
-          </FilterGroup>
-          <FilterGroup>
-            <FilterLabel>Opponent</FilterLabel>
-            <FilterInput
+          </FilterItem>
+
+          <FilterItem>
+            <FilterTextLabel>Opponent</FilterTextLabel>
+            <FilterTextInput
               type="text"
               placeholder="Filter by opponent..."
-              value={filters.Opponent.value}
-              onChange={(e) => handleFilterChange('Opponent', e.target.value)}
+              value={opponentTextInput}
+              onChange={(e) => setOpponentTextInput(e.target.value)}
             />
-          </FilterGroup>
-          <FilterGroup>
-            <FilterLabel>Result</FilterLabel>
-            <FilterSelect
-              value={filters.Result.value}
-              onChange={(e) => handleFilterChange('Result', e.target.value)}
-            >
-              <option value="">All Results</option>
-              <option value="Won">Won</option>
-              <option value="Lost">Lost</option>
-              <option value="Dead Game">Dead Game</option>
-            </FilterSelect>
-          </FilterGroup>
-          <FilterGroup>
-            <FilterLabel>Generation</FilterLabel>
-            <FilterSelect
-              value={filters.Generation.value}
-              onChange={(e) => handleFilterChange('Generation', e.target.value)}
-            >
-              <option value="">All Generations</option>
-              {GENERATIONS.map((gen: Generation) => (
-                <option key={gen} value={gen}>
-                  {gen}
-                </option>
-              ))}
-            </FilterSelect>
-          </FilterGroup>
-          <FilterGroup>
-            <FilterLabel>Tier</FilterLabel>
-            <FilterSelect
-              value={filters.Tier.value}
-              onChange={(e) => handleFilterChange('Tier', e.target.value)}
-            >
-              <option value="">All Tiers</option>
-              {TIERS.map((tier: Tier) => (
-                <option key={tier} value={tier}>
-                  {tier}
-                </option>
-              ))}
-            </FilterSelect>
-          </FilterGroup>
+          </FilterItem>
+
+          <FilterItem>
+            <FilterTextLabel>Result</FilterTextLabel>
+            <div style={{ width: '100%' }}>
+              <FilterDropdownComponent
+                label="Result"
+                options={['Won', 'Lost', 'Dead Game']}
+                selectedValues={resultFilter}
+                onChange={handleResultChange}
+                isOpen={openResultFilter === 'result'}
+                onToggle={() => toggleResultFilter('result')}
+              />
+            </div>
+          </FilterItem>
+
+          <FilterItem>
+            <FilterTextLabel>Generation</FilterTextLabel>
+            <div style={{ width: '100%' }}>
+              <FilterDropdownComponent
+                label="Generation"
+                options={[...GENERATIONS]}
+                selectedValues={generations}
+                onChange={handleGenerationChange}
+                isOpen={openGenerationFilter === 'generation'}
+                onToggle={() => toggleGenerationFilter('generation')}
+              />
+            </div>
+          </FilterItem>
+
+          <FilterItem>
+            <FilterTextLabel>Tier</FilterTextLabel>
+            <div style={{ width: '100%' }}>
+              <FilterDropdownComponent
+                label="Tier"
+                options={[...TIERS]}
+                selectedValues={tiers}
+                onChange={handleTierChange}
+                isOpen={openTierFilter === 'tier'}
+                onToggle={() => toggleTierFilter('tier')}
+              />
+            </div>
+          </FilterItem>
+
+          <FilterItem>
+            <FilterTextLabel>Stage</FilterTextLabel>
+            <div style={{ width: '100%' }}>
+              <FilterDropdownComponent
+                label="Stage"
+                options={['Regular Season', 'Playoff', 'Tiebreak']}
+                selectedValues={stages}
+                onChange={handleStageChange}
+                isOpen={openStageFilter === 'stage'}
+                onToggle={() => toggleStageFilter('stage')}
+              />
+            </div>
+          </FilterItem>
         </FilterGrid>
+
+        <FilterActions>
+          <ClearFiltersButtonComponent onClick={handleClearFilters} />
+        </FilterActions>
       </FilterContainer>
 
       <StatsContainer>
@@ -324,7 +440,7 @@ export function PlayerDetailPage() {
 
       <h2>Match History</h2>
       <Table
-        headers={['Date', 'Opponent', 'Result', 'Generation', 'Tier']}
+        headers={['Date', 'Opponent', 'Result', 'Generation', 'Tier', 'Stage']}
         noFilters
         onSort={handleSort}
         initialSortColumn="Date"
@@ -343,6 +459,7 @@ export function PlayerDetailPage() {
             </TableCell>
             <TableCell>{match.generation}</TableCell>
             <TableCell>{match.tier}</TableCell>
+            <TableCell>{match.stage}</TableCell>
           </TableRow>
         ))}
       </Table>

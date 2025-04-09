@@ -21,14 +21,19 @@ const getAllPlayers = async ({
   endYear?: number;
   stage?: string;
 } = {}) => {
+  // Split comma-separated values into arrays
+  const generations = generation?.split(',');
+  const tiers = tier?.split(',');
+  const stages = stage?.split(',');
+
   return client.player.findMany({
     include: {
       matches: {
         where: {
           match: {
-            ...(generation && { generation }),
-            ...(tier && { tier }),
-            ...(stage && { stage }),
+            ...(generations && { generation: { in: generations } }),
+            ...(tiers && { tier: { in: tiers } }),
+            ...(stages && { stage: { in: stages } }),
             ...((startYear || endYear) && {
               round: {
                 tournament: {

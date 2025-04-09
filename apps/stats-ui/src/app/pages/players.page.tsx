@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGetPlayersQuery, Player } from '../store/apis/players.api';
 import { Container } from '../components/layout/layout';
 import { Table, TableRow, TableCell } from '../components/table/table';
@@ -7,25 +7,12 @@ import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { Generation, Tier } from '@smogon-tournament-stats/shared-constants';
 import { GENERATIONS, TIERS } from '@smogon-tournament-stats/shared-constants';
-
-const FilterContainer = styled.div`
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  align-items: center;
-`;
-
-const FilterLabel = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const Select = styled.select`
-  padding: 0.5rem;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-`;
+import {
+  FilterContainerComponent,
+  FilterDropdownComponent,
+  ClearFiltersButtonComponent,
+  useFilterDropdown,
+} from '../components/filters/filter-dropdown';
 
 const StyledLink = styled.a`
   color: #0066cc;
@@ -48,26 +35,51 @@ type FilterValue = {
 };
 
 export function PlayersPage() {
-  const [generation, setGeneration] = useState<Generation | ''>('');
-  const [tier, setTier] = useState<Tier | ''>('');
   const [startYear, setStartYear] = useState<number | ''>('');
   const [endYear, setEndYear] = useState<number | ''>('');
-  const [stage, setStage] = useState<string>('');
+  const [filters, setFilters] = useState<Record<string, FilterValue>>({});
+
+  // Use the shared filter hook for generations
+  const {
+    selectedValues: generations,
+    setSelectedValues: setGenerations,
+    openFilter: openGenerationFilter,
+    toggleFilter: toggleGenerationFilter,
+    handleCheckboxChange: handleGenerationChange,
+  } = useFilterDropdown<Generation>([...GENERATIONS]);
+
+  // Use the shared filter hook for tiers
+  const {
+    selectedValues: tiers,
+    setSelectedValues: setTiers,
+    openFilter: openTierFilter,
+    toggleFilter: toggleTierFilter,
+    handleCheckboxChange: handleTierChange,
+  } = useFilterDropdown<Tier>([...TIERS]);
+
+  // Use the shared filter hook for stages
+  const {
+    selectedValues: stages,
+    setSelectedValues: setStages,
+    openFilter: openStageFilter,
+    toggleFilter: toggleStageFilter,
+    handleCheckboxChange: handleStageChange,
+  } = useFilterDropdown<string>(['Regular Season', 'Playoff', 'Tiebreak']);
+
   const {
     data: players,
     isLoading,
     isError,
     error,
   } = useGetPlayersQuery({
-    generation: generation || undefined,
-    tier: tier || undefined,
+    generation: generations.length > 0 ? generations.join(',') : undefined,
+    tier: tiers.length > 0 ? tiers.join(',') : undefined,
     startYear: startYear || undefined,
     endYear: endYear || undefined,
-    stage: stage || undefined,
+    stage: stages.length > 0 ? stages.join(',') : undefined,
   });
   const [sortColumn, setSortColumn] = useState<SortColumn>('matcheswon');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [filters, setFilters] = useState<Record<string, FilterValue>>({});
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -120,10 +132,19 @@ export function PlayersPage() {
     }
   };
 
+  const handleClearFilters = () => {
+    setGenerations([]);
+    setTiers([]);
+    setStartYear('');
+    setEndYear('');
+    setStages([]);
+    setFilters({});
+  };
+
   const filteredAndSortedPlayers = [...(players || [])]
     .filter((player: Player) => {
       // First check if the player has any matches in the selected format
-      if (generation || tier) {
+      if (generations.length > 0 || tiers.length > 0 || stages.length > 0) {
         if (player.matchesWon + player.matchesLost + player.deadGames === 0) {
           return false;
         }
@@ -206,47 +227,36 @@ export function PlayersPage() {
       <PageTitle>Players</PageTitle>
       <p>View statistics for all players</p>
 
-      <FilterContainer>
-        <FilterLabel>
-          Generation:
-          <Select
-            value={generation}
-            onChange={(e) => setGeneration(e.target.value as Generation | '')}
-          >
-            <option value="">All Generations</option>
-            {GENERATIONS.map((gen: Generation) => (
-              <option key={gen} value={gen}>
-                {gen}
-              </option>
-            ))}
-          </Select>
-        </FilterLabel>
+      <FilterContainerComponent>
+        <FilterDropdownComponent
+          label="Generation"
+          options={[...GENERATIONS]}
+          selectedValues={generations}
+          onChange={handleGenerationChange}
+          isOpen={openGenerationFilter === 'generation'}
+          onToggle={() => toggleGenerationFilter('generation')}
+        />
 
-        <FilterLabel>
-          Tier:
-          <Select
-            value={tier}
-            onChange={(e) => setTier(e.target.value as Tier | '')}
-          >
-            <option value="">All Tiers</option>
-            {TIERS.map((t: Tier) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </Select>
-        </FilterLabel>
+        <FilterDropdownComponent
+          label="Tier"
+          options={[...TIERS]}
+          selectedValues={tiers}
+          onChange={handleTierChange}
+          isOpen={openTierFilter === 'tier'}
+          onToggle={() => toggleTierFilter('tier')}
+        />
 
-        <FilterLabel>
-          Stage:
-          <Select value={stage} onChange={(e) => setStage(e.target.value)}>
-            <option value="">All Stages</option>
-            <option value="Regular Season">Regular Season</option>
-            <option value="Playoff">Playoff</option>
-            <option value="Tiebreak">Tiebreak</option>
-          </Select>
-        </FilterLabel>
-      </FilterContainer>
+        <FilterDropdownComponent
+          label="Stage"
+          options={['Regular Season', 'Playoff', 'Tiebreak']}
+          selectedValues={stages}
+          onChange={handleStageChange}
+          isOpen={openStageFilter === 'stage'}
+          onToggle={() => toggleStageFilter('stage')}
+        />
+
+        <ClearFiltersButtonComponent onClick={handleClearFilters} />
+      </FilterContainerComponent>
 
       <Table
         headers={[

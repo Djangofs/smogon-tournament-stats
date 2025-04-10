@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth0 } from '@auth0/auth0-react';
 import {
   useGetTournamentsQuery,
   useCreateTournamentMutation,
@@ -53,7 +52,6 @@ export function TournamentsPage() {
   const { data: tournaments, isLoading } = useGetTournamentsQuery();
   const [createTournament, { isLoading: isCreating }] =
     useCreateTournamentMutation();
-  const { isAuthenticated } = useAuth0();
 
   const handleSubmit = async (data: {
     name: string;
@@ -80,11 +78,7 @@ export function TournamentsPage() {
     <Container>
       <Header>
         <PageTitle>Tournaments</PageTitle>
-        {isAuthenticated && (
-          <Button onClick={() => setIsModalOpen(true)}>
-            Create Tournament
-          </Button>
-        )}
+        <Button onClick={() => setIsModalOpen(true)}>Create Tournament</Button>
       </Header>
 
       <TournamentList>

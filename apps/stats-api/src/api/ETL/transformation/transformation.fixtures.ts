@@ -1,0 +1,382 @@
+import { SpreadsheetData } from '../extraction/types';
+
+/**
+ * Mock data for testing the transformation functions
+ */
+export const mockSpreadsheetData: SpreadsheetData = {
+  roundIndices: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+  columnIndices: {
+    playerIndex: 0,
+    teamIndex: 1,
+    priceIndex: 2,
+    tierIndex: 3,
+  },
+  headerRow: [
+    'Player',
+    'Team',
+    'Cost',
+    'Tier',
+    'Week 1',
+    'Week 2',
+    'Week 3',
+    'Week 4',
+    'Week 5',
+    'Semis',
+    'Finals',
+    'Tiebreak',
+  ],
+  data: {
+    rowData: [
+      {
+        values: [
+          { formattedValue: 'Player' },
+          { formattedValue: 'Team' },
+          { formattedValue: 'Cost' },
+          { formattedValue: 'Tier' },
+          { formattedValue: 'Week 1' },
+          { formattedValue: 'Week 2' },
+          { formattedValue: 'Week 3' },
+          { formattedValue: 'Week 4' },
+          { formattedValue: 'Week 5' },
+          { formattedValue: 'Semis' },
+          { formattedValue: 'Finals' },
+          { formattedValue: 'Tiebreak' },
+        ],
+      },
+      {
+        values: [
+          { formattedValue: 'Django' },
+          { formattedValue: 'Team Alpha' },
+          { formattedValue: '10.5' },
+          { formattedValue: 'SS OU / USM OU' },
+          { formattedValue: 'vs. Reiku (W)', note: 'USM OU' },
+          { formattedValue: 'vs. Finchinator (L)', note: 'SS OU' },
+          { formattedValue: 'vs. Z0MOG (W)' },
+          { formattedValue: 'vs. ABR (W)', note: 'BW2 OU' },
+          { formattedValue: 'vs. Empo (L)' },
+          { formattedValue: 'vs. ABR (W)' },
+          { formattedValue: 'vs. Empo (W)' },
+          { formattedValue: '' },
+        ],
+      },
+      {
+        values: [
+          { formattedValue: 'Reiku' },
+          { formattedValue: 'Team Beta' },
+          { formattedValue: '9.0' },
+          { formattedValue: 'USM OU' },
+          { formattedValue: 'vs. Django (L)' },
+          { formattedValue: 'vs. Z0MOG (W)', note: 'SS OU' },
+          { formattedValue: 'vs. Finchinator (L)' },
+          { formattedValue: 'vs. Empo (W)', note: 'ORAS OU' },
+          { formattedValue: 'vs. ABR (L)' },
+          { formattedValue: '' },
+          { formattedValue: '' },
+          { formattedValue: '' },
+        ],
+      },
+      {
+        values: [
+          { formattedValue: 'Finchinator' },
+          { formattedValue: 'Team Gamma' },
+          { formattedValue: '11.0' },
+          { formattedValue: 'SS OU / BW2 OU' },
+          { formattedValue: 'vs. Z0MOG (W)', note: 'BW2 OU' },
+          { formattedValue: 'vs. Django (W)' },
+          { formattedValue: 'vs. Reiku (W)', note: 'ORAS OU' },
+          { formattedValue: 'vs. ABR (L)' },
+          { formattedValue: 'vs. Empo (W)', note: 'USM OU' },
+          { formattedValue: 'vs. Empo (L)' },
+          { formattedValue: '' },
+          { formattedValue: '' },
+        ],
+      },
+      {
+        values: [
+          { formattedValue: 'Z0MOG' },
+          { formattedValue: 'Team Delta' },
+          { formattedValue: '8.5' },
+          { formattedValue: 'ORAS OU' },
+          { formattedValue: 'vs. Finchinator (L)' },
+          { formattedValue: 'vs. Reiku (L)' },
+          { formattedValue: 'vs. Django (L)', note: 'USM OU' },
+          { formattedValue: 'vs. Empo (L)', note: 'SS OU' },
+          { formattedValue: 'vs. ABR (L)' },
+          { formattedValue: '' },
+          { formattedValue: '' },
+          { formattedValue: '' },
+        ],
+      },
+      {
+        values: [
+          { formattedValue: 'ABR' },
+          { formattedValue: 'Team Epsilon' },
+          { formattedValue: '10.0' },
+          { formattedValue: 'SS OU / ORAS OU' },
+          { formattedValue: 'vs. Empo (W)', note: 'ORAS OU' },
+          { formattedValue: 'vs. Z0MOG (W)' },
+          { formattedValue: 'vs. Finchinator (W)', note: 'USM OU' },
+          { formattedValue: 'vs. Django (L)', note: 'BW2 OU' },
+          { formattedValue: 'vs. Reiku (W)' },
+          { formattedValue: 'vs. Django (L)' },
+          { formattedValue: '' },
+          { formattedValue: '' },
+        ],
+      },
+      {
+        values: [
+          { formattedValue: 'Empo' },
+          { formattedValue: 'Team Zeta' },
+          { formattedValue: '9.5' },
+          { formattedValue: 'SS OU / BW2 OU' },
+          { formattedValue: 'vs. ABR (L)' },
+          { formattedValue: 'vs. Django (W)', note: 'USM OU' },
+          { formattedValue: 'vs. Z0MOG (W)' },
+          { formattedValue: 'vs. Reiku (L)' },
+          { formattedValue: 'vs. Finchinator (L)', note: 'ORAS OU' },
+          { formattedValue: 'vs. Finchinator (W)' },
+          { formattedValue: 'vs. Django (L)' },
+          { formattedValue: '' },
+        ],
+      },
+      {
+        values: [
+          { formattedValue: 'Lycans' },
+          { formattedValue: 'Team Omega' },
+          { formattedValue: '8.0' },
+          { formattedValue: 'SS UU / USM UU' },
+          { formattedValue: 'vs. Z0MOG (W)', note: 'SS UU' },
+          { formattedValue: 'vs. Reiku (L)', note: 'USM UU' },
+          { formattedValue: 'vs. Finchinator (L)' },
+          { formattedValue: 'vs. ABR (W)', note: 'ORAS UU' },
+          { formattedValue: 'vs. Empo (L)' },
+          { formattedValue: '' },
+          { formattedValue: '' },
+          { formattedValue: '' },
+        ],
+      },
+      {
+        values: [
+          { formattedValue: 'Lopunny' },
+          { formattedValue: 'Team Theta' },
+          { formattedValue: '7.5' },
+          { formattedValue: 'SS RU / USM RU' },
+          { formattedValue: 'vs. Finchinator (L)', note: 'SS RU' },
+          { formattedValue: 'vs. Z0MOG (W)', note: 'USM RU' },
+          { formattedValue: 'vs. Reiku (L)' },
+          { formattedValue: 'vs. ABR (L)', note: 'ORAS RU' },
+          { formattedValue: 'vs. Empo (W)' },
+          { formattedValue: '' },
+          { formattedValue: '' },
+          { formattedValue: '' },
+        ],
+      },
+    ],
+  },
+};
+
+/**
+ * Mock replay data for testing
+ */
+export const mockReplayData = [
+  {
+    player1: 'Django',
+    player2: 'Reiku',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen7ou-123456',
+  },
+  {
+    player1: 'Django',
+    player2: 'Finchinator',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8ou-123457',
+  },
+  {
+    player1: 'Django',
+    player2: 'Z0MOG',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen7ou-123458',
+  },
+  {
+    player1: 'Django',
+    player2: 'ABR',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen5ou-123459',
+  },
+  {
+    player1: 'Django',
+    player2: 'Empo',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8ou-123460',
+  },
+  {
+    player1: 'Reiku',
+    player2: 'Django',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen7ou-123461',
+  },
+  {
+    player1: 'Reiku',
+    player2: 'Z0MOG',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8ou-123462',
+  },
+  {
+    player1: 'Reiku',
+    player2: 'Finchinator',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen7ou-123463',
+  },
+  {
+    player1: 'Reiku',
+    player2: 'Empo',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen6ou-123464',
+  },
+  {
+    player1: 'Reiku',
+    player2: 'ABR',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen7ou-123465',
+  },
+  {
+    player1: 'Finchinator',
+    player2: 'Z0MOG',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen5ou-123466',
+  },
+  {
+    player1: 'Finchinator',
+    player2: 'Django',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8ou-123467',
+  },
+  {
+    player1: 'Finchinator',
+    player2: 'Reiku',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen6ou-123468',
+  },
+  {
+    player1: 'Finchinator',
+    player2: 'ABR',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8ou-123469',
+  },
+  {
+    player1: 'Finchinator',
+    player2: 'Empo',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen7ou-123470',
+  },
+  {
+    player1: 'Z0MOG',
+    player2: 'Finchinator',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen5ou-123471',
+  },
+  {
+    player1: 'Z0MOG',
+    player2: 'Reiku',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8ou-123472',
+  },
+  {
+    player1: 'Z0MOG',
+    player2: 'Django',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen7ou-123473',
+  },
+  {
+    player1: 'Z0MOG',
+    player2: 'Empo',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8ou-123474',
+  },
+  {
+    player1: 'Z0MOG',
+    player2: 'ABR',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen6ou-123475',
+  },
+  {
+    player1: 'ABR',
+    player2: 'Empo',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen6ou-123476',
+  },
+  {
+    player1: 'ABR',
+    player2: 'Z0MOG',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8ou-123477',
+  },
+  {
+    player1: 'ABR',
+    player2: 'Finchinator',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen7ou-123478',
+  },
+  {
+    player1: 'ABR',
+    player2: 'Django',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen5ou-123479',
+  },
+  {
+    player1: 'ABR',
+    player2: 'Reiku',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8ou-123480',
+  },
+  {
+    player1: 'Empo',
+    player2: 'ABR',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen6ou-123481',
+  },
+  {
+    player1: 'Empo',
+    player2: 'Django',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8ou-123482',
+  },
+  {
+    player1: 'Empo',
+    player2: 'Z0MOG',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen6ou-123483',
+  },
+  {
+    player1: 'Empo',
+    player2: 'Reiku',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8ou-123484',
+  },
+  {
+    player1: 'Empo',
+    player2: 'Finchinator',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen6ou-123485',
+  },
+  {
+    player1: 'Lycans',
+    player2: 'Z0MOG',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8uu-123486',
+  },
+  {
+    player1: 'Lycans',
+    player2: 'Reiku',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen7uu-123487',
+  },
+  {
+    player1: 'Lycans',
+    player2: 'Finchinator',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8uu-123488',
+  },
+  {
+    player1: 'Lycans',
+    player2: 'ABR',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen6uu-123489',
+  },
+  {
+    player1: 'Lycans',
+    player2: 'Empo',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8uu-123490',
+  },
+  {
+    player1: 'Lopunny',
+    player2: 'Finchinator',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8ru-123491',
+  },
+  {
+    player1: 'Lopunny',
+    player2: 'Z0MOG',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen7ru-123492',
+  },
+  {
+    player1: 'Lopunny',
+    player2: 'Reiku',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8ru-123493',
+  },
+  {
+    player1: 'Lopunny',
+    player2: 'ABR',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen6ru-123494',
+  },
+  {
+    player1: 'Lopunny',
+    player2: 'Empo',
+    replayUrl: 'https://replay.pokemonshowdown.com/smogtours-gen8ru-123495',
+  },
+];

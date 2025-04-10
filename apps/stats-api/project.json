@@ -27,6 +27,20 @@
       "options": {
         "command": "yarn prisma migrate deploy"
       }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/stats-api"],
+      "options": {
+        "jestConfig": "apps/stats-api/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
+      }
     }
   }
 }

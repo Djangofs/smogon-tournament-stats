@@ -5,7 +5,8 @@ import { createTeam, createTournamentTeam } from '../team/team.service';
 import { createRound } from '../round/round.service';
 import { createMatch, createPlayerMatch } from '../match/match.service';
 import { createGame } from '../game/game.service';
-import { extractTournamentData, extractReplays } from '../extraction';
+import { extractDataFromSheet, extractReplays } from '../ETL/extraction';
+import { TransformLegacyTournamentData } from '../ETL/transformation/legacy.transformer';
 import logger from '../../utils/logger';
 
 interface TournamentPlayer {
@@ -30,8 +31,8 @@ const createMatchWithGame = async ({
   generation,
   tier,
   tournamentYear,
-  roundName,
   replayUrl,
+  stage,
 }: {
   roundId: string;
   currentPlayer: TournamentPlayer;
@@ -42,27 +43,8 @@ const createMatchWithGame = async ({
   tournamentYear: number;
   roundName: string;
   replayUrl?: string;
+  stage: string;
 }) => {
-  // Determine the stage based on the round name
-  let stage: string | null = null;
-  const roundNameLower = roundName.toLowerCase();
-
-  // First check for tiebreak matches, as they take precedence
-  if (roundNameLower.startsWith('tiebreak')) {
-    stage = 'Tiebreak';
-  }
-  // Then check for playoff matches (semifinals, finals)
-  else if (
-    roundNameLower.startsWith('semi') ||
-    roundNameLower.startsWith('final')
-  ) {
-    stage = 'Playoff';
-  }
-  // All other matches are considered regular season
-  else {
-    stage = 'Regular Season';
-  }
-
   // Create the match
   const newMatch = await createMatch({
     roundId,
@@ -174,9 +156,14 @@ export const createTournament = async ({
   }
 
   // Extract data from spreadsheet
-  const tournamentData = await extractTournamentData({
+  const spreadsheetData = await extractDataFromSheet({
     sheetName,
     sheetId,
+  });
+
+  // Transform the data
+  const tournamentData = await TransformLegacyTournamentData({
+    spreadsheetData,
   });
 
   // Extract replays if replayPostUrl is provided
@@ -189,6 +176,21 @@ export const createTournament = async ({
       logger.error(`Failed to extract replays from ${replayPostUrl}:`, error);
     }
   }
+
+  // Associate replays with matches
+  const matchReplayMap = new Map<string, string>();
+  if (replays.length > 0) {
+    // Create a map of player pairs to replay URLs
+    for (const replay of replays) {
+      // Create a unique key for the player pair (order doesn't matter)
+      const playerPairKey = [replay.player1, replay.player2].sort().join('|');
+      matchReplayMap.set(playerPairKey, replay.replayUrl);
+    }
+    logger.info(`Associated ${matchReplayMap.size} replays with matches`);
+  }
+
+  // LOADING PROCESS BELOW
+  // TODO: Refactor this into the ETL folders
 
   // Make any new teams
   const teamPromises = tournamentData.teams.map((team) =>
@@ -255,18 +257,9 @@ export const createTournament = async ({
         );
         if (!player2) return null;
 
-        // Find a matching replay for this match
-        const replayIndex = replays.findIndex(
-          (r) =>
-            (r.player1 === match.player1 && r.player2 === match.player2) ||
-            (r.player1 === match.player2 && r.player2 === match.player1)
-        );
-
-        // Get the replay if found and remove it from the array
-        const replay = replayIndex !== -1 ? replays[replayIndex] : undefined;
-        if (replayIndex !== -1) {
-          replays.splice(replayIndex, 1);
-        }
+        // Find a matching replay for this match using the pre-created map
+        const playerPairKey = [match.player1, match.player2].sort().join('|');
+        const replayUrl = matchReplayMap.get(playerPairKey);
 
         return createMatchWithGame({
           roundId: roundRecord.id,
@@ -282,7 +275,8 @@ export const createTournament = async ({
           tier: match.tier,
           tournamentYear: year,
           roundName: round.name,
-          replayUrl: replay?.replayUrl,
+          replayUrl,
+          stage: match.stage,
         });
       });
 

@@ -244,16 +244,19 @@ const findPlayerByName = async ({
 }): Promise<{
   id: string;
   currentName: string;
+  aliases: string[];
 } | null> => {
   // Try to find by current name
   const player = await client.player.findFirst({
     where: { name },
+    include: { aliases: true },
   });
 
   if (player) {
     return {
       id: player.id,
       currentName: player.name,
+      aliases: player.aliases.map((alias) => alias.name),
     };
   }
 
@@ -261,7 +264,11 @@ const findPlayerByName = async ({
   const alias = await client.playerAlias.findFirst({
     where: { name },
     include: {
-      player: true,
+      player: {
+        include: {
+          aliases: true,
+        },
+      },
     },
   });
 
@@ -269,6 +276,7 @@ const findPlayerByName = async ({
     return {
       id: alias.playerId,
       currentName: alias.player.name,
+      aliases: alias.player.aliases.map((alias) => alias.name),
     };
   }
 

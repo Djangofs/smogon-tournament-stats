@@ -1,6 +1,10 @@
 import { tournamentsData } from './tournaments.data';
 import { TournamentDatabase } from './tournaments.model';
-import { createPlayer, createTournamentPlayer } from '../player/player.service';
+import {
+  createPlayer,
+  createTournamentPlayer,
+  PlayerRecord,
+} from '../player/player.service';
 import { createTeam, createTournamentTeam } from '../team/team.service';
 import { createRound } from '../round/round.service';
 import { createMatch, createPlayerMatch } from '../match/match.service';
@@ -19,12 +23,6 @@ interface TournamentPlayer {
   createdAt: Date;
   updatedAt: Date;
 }
-
-interface PlayerRecord {
-  id: string;
-  name: string;
-}
-
 const createMatchWithGame = async ({
   roundId,
   currentPlayer,
@@ -98,7 +96,14 @@ const findTournamentPlayer = (
   createdPlayers: PlayerRecord[]
 ): TournamentPlayer | null => {
   // Find the player by name or alias
-  const player = createdPlayers.find((p) => p.name === playerName);
+  const player = createdPlayers.find(
+    (p) =>
+      p.name.toLowerCase() === playerName.toLowerCase() ||
+      p.aliases.some(
+        (alias) => alias.toLowerCase() === playerName.toLowerCase()
+      )
+  );
+
   if (!player) {
     logger.warn(`Could not find player record for ${playerName}`);
     return null;

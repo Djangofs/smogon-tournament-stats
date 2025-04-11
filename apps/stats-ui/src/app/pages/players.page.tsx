@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useGetPlayersQuery, Player } from '../store/apis/players.api';
 import { Container } from '../components/layout/layout';
 import { Table, TableRow, TableCell } from '../components/table/table';
 import { PageTitle } from '../components/typography/page-title';
-import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { Generation, Tier } from '@smogon-tournament-stats/shared-constants';
 import { GENERATIONS, TIERS } from '@smogon-tournament-stats/shared-constants';

@@ -30,9 +30,10 @@ interface PlayerDetails {
   matches: PlayerMatch[];
 }
 
-interface PlayerRecord {
+export interface PlayerRecord {
   id: string;
   name: string;
+  aliases: string[];
 }
 
 export const getAllPlayers = async ({
@@ -92,6 +93,7 @@ export const createPlayer = async ({
     return {
       id: existingPlayer.id,
       name: existingPlayer.currentName,
+      aliases: existingPlayer.aliases,
     };
   }
 
@@ -101,6 +103,7 @@ export const createPlayer = async ({
   return {
     id: newPlayer.id,
     name: newPlayer.name,
+    aliases: [],
   };
 };
 
@@ -154,6 +157,7 @@ export const linkPlayerRecords = async ({
     return {
       id: oldPlayer.id,
       name: oldPlayer.currentName,
+      aliases: oldPlayer.aliases,
     };
   }
 
@@ -167,6 +171,7 @@ export const linkPlayerRecords = async ({
   return {
     id: oldPlayer.id,
     name: newPlayer.currentName,
+    aliases: newPlayer.aliases,
   };
 };
 
@@ -210,5 +215,47 @@ export const getPlayerById = async (id: string): Promise<PlayerDetails> => {
     matchesLost,
     deadGames,
     matches,
+  };
+};
+
+export const addPlayerAlias = async ({
+  playerId,
+  alias,
+}: {
+  playerId: string;
+  alias: string;
+}): Promise<{ id: string; name: string }> => {
+  // First check if the player exists
+  const player = await playerData.getPlayerById({ id: playerId });
+  if (!player) {
+    throw new Error(`Player with ID ${playerId} not found`);
+  }
+
+  // Check if the alias already exists for this player
+  const existingPlayer = await playerData.findPlayerByName({ name: alias });
+  if (existingPlayer) {
+    if (existingPlayer.id === playerId) {
+      logger.info(`Alias ${alias} is already linked to player ${player.name}`);
+      return {
+        id: player.id,
+        name: player.name,
+      };
+    } else {
+      throw new Error(
+        `Alias ${alias} is already linked to a different player: ${existingPlayer.currentName}`
+      );
+    }
+  }
+
+  // Link the alias to the player
+  logger.info(`Adding alias ${alias} to player ${player.name}`);
+  await playerData.linkPlayerRecords({
+    oldName: alias,
+    newName: player.name,
+  });
+
+  return {
+    id: player.id,
+    name: player.name,
   };
 };

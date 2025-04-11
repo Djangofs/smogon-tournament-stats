@@ -3,22 +3,32 @@ import { baseQueryWithAuth } from './baseQueryWithAuth';
 
 export interface PlayerMatch {
   id: string;
-  tournamentId: string;
+  winner: boolean | null;
+  generation: string;
+  tier: string;
+  stage: string | null;
+  year: number;
   tournamentName: string;
-  round: string;
-  opponent: string;
-  result: string;
-  replay?: string;
+  opponentName: string;
+  opponentId: string;
 }
 
 export interface Player {
   id: string;
   name: string;
+  matchesWon: number;
+  matchesLost: number;
+  deadGames: number;
   matches?: PlayerMatch[];
 }
 
 export interface GetPlayersQueryParams {
   tournamentId?: string;
+  generation?: string;
+  tier?: string;
+  startYear?: number;
+  endYear?: number;
+  stage?: string;
 }
 
 export interface PlayerDetails extends Player {

@@ -26,4 +26,6 @@ export interface CreateTournamentRequest {
   isTeam?: boolean;
   year: number;
   replayPostUrl?: string;
+  replaySource?: 'thread' | 'embedded' | 'none';
+  transformer?: 'legacy' | 'modern' | 'spl-middle';
 }

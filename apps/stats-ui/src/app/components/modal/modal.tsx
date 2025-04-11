@@ -139,6 +139,23 @@ const StyledSubmitButton = styled.button.attrs({ type: 'submit' })`
   }
 `;
 
+const StyledSelect = styled.select`
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+
+  &:focus {
+    outline: none;
+    border-color: #0066cc;
+  }
+
+  &:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+  }
+`;
+
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -150,6 +167,8 @@ interface ModalProps {
     isTeam: boolean;
     year: number;
     replayPostUrl?: string;
+    replaySource: 'thread' | 'embedded' | 'none';
+    transformer?: string;
   }) => void;
   isLoading?: boolean;
 }
@@ -173,6 +192,10 @@ export function Modal({
       isTeam: formData.get('isTeam') === 'true',
       year: parseInt(formData.get('year') as string),
       replayPostUrl: (formData.get('replayPostUrl') as string) || undefined,
+      replaySource:
+        (formData.get('replaySource') as 'thread' | 'embedded' | 'none') ||
+        'none',
+      transformer: (formData.get('transformer') as string) || undefined,
     });
   };
 
@@ -231,6 +254,32 @@ export function Modal({
               placeholder="e.g., 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
               disabled={isLoading}
             />
+          </FormGroup>
+          <FormGroup>
+            <StyledLabel htmlFor="replaySource">Replay Source</StyledLabel>
+            <StyledSelect
+              id="replaySource"
+              name="replaySource"
+              disabled={isLoading}
+              defaultValue="none"
+            >
+              <option value="none">No Replays Available</option>
+              <option value="thread">Replays in Separate Thread</option>
+              <option value="embedded">Replays Embedded in Sheet</option>
+            </StyledSelect>
+          </FormGroup>
+          <FormGroup>
+            <StyledLabel htmlFor="transformer">Data Transformer</StyledLabel>
+            <StyledSelect
+              id="transformer"
+              name="transformer"
+              disabled={isLoading}
+            >
+              <option value="">Default Transformer</option>
+              <option value="legacy">Legacy Transformer</option>
+              <option value="modern">Modern Transformer</option>
+              <option value="spl-middle">SPL Middle Transformer</option>
+            </StyledSelect>
           </FormGroup>
           <FormGroup>
             <StyledLabel htmlFor="replayPostUrl">Replay Post URL</StyledLabel>

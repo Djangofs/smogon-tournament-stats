@@ -4,7 +4,7 @@ export function sharedConstants(): string {
 
 export const GENERATIONS = [
   'SV',
-  'SWSH',
+  'SS',
   'SM',
   'ORAS',
   'BW',
@@ -31,7 +31,8 @@ const GEN_MAP: Record<string, Generation> = {
   ORAS: 'ORAS',
   SM: 'SM',
   USM: 'SM',
-  SWSH: 'SWSH',
+  SWSH: 'SS',
+  SS: 'SS',
   SV: 'SV',
 };
 

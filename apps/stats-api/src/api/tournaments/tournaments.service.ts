@@ -7,6 +7,8 @@ import { createMatch, createPlayerMatch } from '../match/match.service';
 import { createGame } from '../game/game.service';
 import { extractDataFromSheet, extractReplays } from '../ETL/extraction';
 import { TransformLegacyTournamentData } from '../ETL/transformation/legacy.transformer';
+import { TransformModernTournamentData } from '../ETL/transformation/modern.transformer';
+import { TransformSPLMiddleTournamentData } from '../ETL/transformation/spl-middle.transformer';
 import logger from '../../utils/logger';
 
 interface TournamentPlayer {
@@ -131,6 +133,8 @@ export const createTournament = async ({
   isTeam,
   year,
   replayPostUrl,
+  replaySource = 'none',
+  transformer = 'legacy',
 }: {
   name: string;
   sheetName: string;
@@ -139,6 +143,8 @@ export const createTournament = async ({
   isTeam: boolean;
   year: number;
   replayPostUrl?: string;
+  replaySource?: 'thread' | 'embedded' | 'none';
+  transformer?: string;
 }) => {
   let tournament: TournamentDatabase;
   const existingTournament = await tournamentsData.findTournament({ name });
@@ -161,14 +167,28 @@ export const createTournament = async ({
     sheetId,
   });
 
-  // Transform the data
-  const tournamentData = await TransformLegacyTournamentData({
-    spreadsheetData,
-  });
+  // Transform the data using the specified transformer
+  let tournamentData;
+  switch (transformer) {
+    case 'modern':
+      tournamentData = await TransformModernTournamentData({
+        spreadsheetData,
+      });
+      break;
+    case 'spl-middle':
+      tournamentData = await TransformSPLMiddleTournamentData({
+        spreadsheetData,
+      });
+      break;
+    default:
+      tournamentData = await TransformLegacyTournamentData({
+        spreadsheetData,
+      });
+  }
 
-  // Extract replays if replayPostUrl is provided
+  // Extract replays based on the replay source
   let replays: { player1: string; player2: string; replayUrl: string }[] = [];
-  if (replayPostUrl) {
+  if (replaySource === 'thread' && replayPostUrl) {
     try {
       replays = await extractReplays(replayPostUrl);
       logger.info(`Extracted ${replays.length} replays from ${replayPostUrl}`);
@@ -210,7 +230,7 @@ export const createTournament = async ({
     ...new Set(tournamentData.players.map((row) => row.player)),
   ];
   const playerPromises = uniquePlayers.map((player) =>
-    createPlayer({ name: player })
+    createPlayer({ name: player as string })
   );
   const createdPlayers = await Promise.all(playerPromises);
 

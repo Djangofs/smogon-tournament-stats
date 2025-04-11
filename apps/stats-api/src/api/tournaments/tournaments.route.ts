@@ -4,6 +4,7 @@ import { TournamentDTO } from './tournaments.model';
 import { tournamentsController } from './tournaments.controller';
 import { requireAdminRole } from '../../middleware/auth.middleware';
 import logger from '../../utils/logger';
+import { TransformSPLMiddleTournamentData } from '../ETL/transformation/spl-middle.transformer';
 
 const router = Router();
 
@@ -51,7 +52,19 @@ async function createTournamentRoute(req: Request, res: Response) {
       isTeam,
       year,
       replayPostUrl,
+      transformer,
     } = req.body;
+
+    // Validate transformer type
+    if (
+      transformer &&
+      !['legacy', 'modern', 'spl-middle'].includes(transformer)
+    ) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Invalid transformer type',
+      });
+    }
 
     const tournament = await createTournamentController({
       name,
@@ -61,10 +74,12 @@ async function createTournamentRoute(req: Request, res: Response) {
       isTeam,
       year,
       replayPostUrl,
+      transformer,
     });
 
     res.status(201).send(tournament);
   } catch (error) {
+    logger.error('Error creating tournament', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to create tournament',
@@ -85,6 +100,7 @@ async function createTournamentController({
   isTeam,
   year,
   replayPostUrl,
+  transformer,
 }: {
   name: string;
   sheetName: string;
@@ -93,6 +109,7 @@ async function createTournamentController({
   isTeam: boolean;
   year: number;
   replayPostUrl?: string;
+  transformer?: string;
 }) {
   return await createTournament({
     name,
@@ -102,5 +119,6 @@ async function createTournamentController({
     isTeam,
     year,
     replayPostUrl,
+    transformer,
   });
 }

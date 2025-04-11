@@ -10,6 +10,8 @@ export interface CreateTournamentRequest {
   isTeam?: boolean;
   year: number;
   replayPostUrl?: string;
+  replaySource?: 'thread' | 'embedded' | 'none';
+  transformer?: string;
 }
 
 export interface TournamentDTO {

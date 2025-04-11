@@ -176,6 +176,411 @@ export const mockSpreadsheetData: SpreadsheetData = {
 };
 
 /**
+ * Mock data for SPL Middle tournament with proper scheduling
+ * Each player plays exactly once per round with no duplicates
+ */
+export const splMiddleSpreadsheetData: SpreadsheetData = {
+  roundIndices: [5, 6, 7, 8, 9],
+  columnIndices: {
+    playerIndex: 0,
+    teamIndex: 1,
+    priceIndex: 2,
+    tierIndex: 3,
+  },
+  headerRow: [
+    'Player',
+    'Team',
+    'Cost',
+    'Tier(s)',
+    'Record',
+    'Round 1',
+    'Round 2',
+    'Round 3',
+    'Round 4',
+    'Round 5',
+  ],
+  data: {
+    rowData: [
+      // Header row
+      {
+        values: [
+          { formattedValue: 'Player' },
+          { formattedValue: 'Team' },
+          { formattedValue: 'Cost' },
+          { formattedValue: 'Tier(s)' },
+          { formattedValue: 'Record' },
+          { formattedValue: 'Round 1' },
+          { formattedValue: 'Round 2' },
+          { formattedValue: 'Round 3' },
+          { formattedValue: 'Round 4' },
+          { formattedValue: 'Round 5' },
+        ],
+      },
+      // KantoElite - TrainerRed
+      {
+        values: [
+          { formattedValue: 'TrainerRed' },
+          { formattedValue: 'KantoElite' },
+          { formattedValue: '25000' },
+          { formattedValue: 'SS OU' },
+          { formattedValue: '4 - 1 - 0' },
+          { formattedValue: 'W vs CrystalClear (SS OU)' },
+          { formattedValue: 'W vs EmeraldGreen (SS OU)' },
+          { formattedValue: 'W vs Platinum (SS OU)' },
+          { formattedValue: 'W vs Calem (SS OU)' },
+          { formattedValue: 'W vs Hilbert (SS OU)' },
+        ],
+      },
+      // KantoElite - BlueOak
+      {
+        values: [
+          { formattedValue: 'BlueOak' },
+          { formattedValue: 'KantoElite' },
+          { formattedValue: '22000' },
+          { formattedValue: 'SM OU / USM OU' },
+          { formattedValue: '3 - 2 - 0' },
+          { formattedValue: 'W vs SilverRocket (SM OU)' },
+          { formattedValue: 'L vs DiamondPearl (USM OU)' },
+          { formattedValue: 'L vs Pearl (SM OU)' },
+          { formattedValue: 'L vs Serena (USM OU)' },
+          { formattedValue: 'L vs Hilda (SM OU)' },
+        ],
+      },
+      // KantoElite - GreenLeaf
+      {
+        values: [
+          { formattedValue: 'GreenLeaf' },
+          { formattedValue: 'KantoElite' },
+          { formattedValue: '18000' },
+          { formattedValue: 'ORAS OU' },
+          { formattedValue: '2 - 3 - 0' },
+          { formattedValue: 'L vs RubyRed (ORAS OU)' },
+          { formattedValue: 'W vs BlackWhite (ORAS OU)' },
+          { formattedValue: 'W vs Diamond (ORAS OU)' },
+          { formattedValue: 'L vs Lysandre (ORAS OU)' },
+          { formattedValue: 'L vs N (ORAS OU)' },
+        ],
+      },
+      // KantoElite - YellowPika
+      {
+        values: [
+          { formattedValue: 'YellowPika' },
+          { formattedValue: 'KantoElite' },
+          { formattedValue: '15000' },
+          { formattedValue: 'DPP OU / BW OU' },
+          { formattedValue: '2 - 3 - 0' },
+          { formattedValue: 'W vs SapphireBlue (DPP OU)' },
+          { formattedValue: 'L vs XY (BW OU)' },
+          { formattedValue: 'W vs Cyrus (DPP OU)' },
+          { formattedValue: 'L vs Diantha (BW OU)' },
+          { formattedValue: 'L vs Ghetsis (DPP OU)' },
+        ],
+      },
+      // JohtoChamps - CrystalClear
+      {
+        values: [
+          { formattedValue: 'CrystalClear' },
+          { formattedValue: 'JohtoChamps' },
+          { formattedValue: '20000' },
+          { formattedValue: 'SS OU' },
+          { formattedValue: '3 - 2 - 0' },
+          { formattedValue: 'L vs TrainerRed (SS OU)' },
+          { formattedValue: 'W vs Hilbert (SS OU)' },
+          { formattedValue: 'L vs Calem (SS OU)' },
+          { formattedValue: 'W vs EmeraldGreen (SS OU)' },
+          { formattedValue: 'W vs Platinum (SS OU)' },
+        ],
+      },
+      // JohtoChamps - SilverRocket
+      {
+        values: [
+          { formattedValue: 'SilverRocket' },
+          { formattedValue: 'JohtoChamps' },
+          { formattedValue: '12000' },
+          { formattedValue: 'BW OU / XY OU' },
+          { formattedValue: '2 - 3 - 0' },
+          { formattedValue: 'L vs BlueOak (BW OU)' },
+          { formattedValue: 'L vs Hilda (XY OU)' },
+          { formattedValue: 'W vs Serena (BW OU)' },
+          { formattedValue: 'L vs DiamondPearl (XY OU)' },
+          { formattedValue: 'W vs Pearl (BW OU)' },
+        ],
+      },
+      // JohtoChamps - RubyRed
+      {
+        values: [
+          { formattedValue: 'RubyRed' },
+          { formattedValue: 'JohtoChamps' },
+          { formattedValue: '19000' },
+          { formattedValue: 'ORAS OU' },
+          { formattedValue: '2 - 3 - 0' },
+          { formattedValue: 'W vs GreenLeaf (ORAS OU)' },
+          { formattedValue: 'W vs N (ORAS OU)' },
+          { formattedValue: 'W vs Lysandre (ORAS OU)' },
+          { formattedValue: 'L vs BlackWhite (ORAS OU)' },
+          { formattedValue: 'L vs Diamond (ORAS OU)' },
+        ],
+      },
+      // JohtoChamps - SapphireBlue
+      {
+        values: [
+          { formattedValue: 'SapphireBlue' },
+          { formattedValue: 'JohtoChamps' },
+          { formattedValue: '17000' },
+          { formattedValue: 'ORAS OU' },
+          { formattedValue: '3 - 2 - 0' },
+          { formattedValue: 'L vs YellowPika (ORAS OU)' },
+          { formattedValue: 'W vs Ghetsis (ORAS OU)' },
+          { formattedValue: 'L vs Diantha (ORAS OU)' },
+          { formattedValue: 'W vs XY (ORAS OU)' },
+          { formattedValue: 'W vs Cyrus (ORAS OU)' },
+        ],
+      },
+      // HoennHeroes - EmeraldGreen
+      {
+        values: [
+          { formattedValue: 'EmeraldGreen' },
+          { formattedValue: 'HoennHeroes' },
+          { formattedValue: '16000' },
+          { formattedValue: 'ORAS OU' },
+          { formattedValue: '2 - 3 - 0' },
+          { formattedValue: 'W vs Platinum (ORAS OU)' },
+          { formattedValue: 'L vs TrainerRed (ORAS OU)' },
+          { formattedValue: 'L vs Hilbert (ORAS OU)' },
+          { formattedValue: 'L vs CrystalClear (ORAS OU)' },
+          { formattedValue: 'L vs Calem (ORAS OU)' },
+        ],
+      },
+      // HoennHeroes - DiamondPearl
+      {
+        values: [
+          { formattedValue: 'DiamondPearl' },
+          { formattedValue: 'HoennHeroes' },
+          { formattedValue: '14000' },
+          { formattedValue: 'DPP OU' },
+          { formattedValue: '3 - 2 - 0' },
+          { formattedValue: 'L vs Pearl (DPP OU)' },
+          { formattedValue: 'W vs BlueOak (DPP OU)' },
+          { formattedValue: 'W vs Hilda (DPP OU)' },
+          { formattedValue: 'W vs SilverRocket (DPP OU)' },
+          { formattedValue: 'L vs Pearl (DPP OU)' },
+        ],
+      },
+      // HoennHeroes - BlackWhite
+      {
+        values: [
+          { formattedValue: 'BlackWhite' },
+          { formattedValue: 'HoennHeroes' },
+          { formattedValue: '13000' },
+          { formattedValue: 'BW OU' },
+          { formattedValue: '3 - 2 - 0' },
+          { formattedValue: 'W vs Diamond (BW OU)' },
+          { formattedValue: 'L vs GreenLeaf (BW OU)' },
+          { formattedValue: 'W vs N (BW OU)' },
+          { formattedValue: 'W vs RubyRed (BW OU)' },
+          { formattedValue: 'W vs Diamond (BW OU)' },
+        ],
+      },
+      // HoennHeroes - XY
+      {
+        values: [
+          { formattedValue: 'XY' },
+          { formattedValue: 'HoennHeroes' },
+          { formattedValue: '11000' },
+          { formattedValue: 'XY OU' },
+          { formattedValue: '3 - 2 - 0' },
+          { formattedValue: 'W vs Cyrus (XY OU)' },
+          { formattedValue: 'W vs YellowPika (XY OU)' },
+          { formattedValue: 'W vs Ghetsis (XY OU)' },
+          { formattedValue: 'L vs SapphireBlue (XY OU)' },
+          { formattedValue: 'L vs Diantha (XY OU)' },
+        ],
+      },
+      // SinnohStars - Platinum
+      {
+        values: [
+          { formattedValue: 'Platinum' },
+          { formattedValue: 'SinnohStars' },
+          { formattedValue: '10000' },
+          { formattedValue: 'DPP OU' },
+          { formattedValue: '1 - 4 - 0' },
+          { formattedValue: 'L vs EmeraldGreen (DPP OU)' },
+          { formattedValue: 'W vs Calem (DPP OU)' },
+          { formattedValue: 'L vs TrainerRed (DPP OU)' },
+          { formattedValue: 'L vs Hilbert (DPP OU)' },
+          { formattedValue: 'L vs CrystalClear (DPP OU)' },
+        ],
+      },
+      // SinnohStars - Pearl
+      {
+        values: [
+          { formattedValue: 'Pearl' },
+          { formattedValue: 'SinnohStars' },
+          { formattedValue: '9000' },
+          { formattedValue: 'DPP OU' },
+          { formattedValue: '3 - 2 - 0' },
+          { formattedValue: 'W vs DiamondPearl (DPP OU)' },
+          { formattedValue: 'W vs Serena (DPP OU)' },
+          { formattedValue: 'W vs BlueOak (DPP OU)' },
+          { formattedValue: 'W vs Hilda (DPP OU)' },
+          { formattedValue: 'L vs SilverRocket (DPP OU)' },
+        ],
+      },
+      // SinnohStars - Diamond
+      {
+        values: [
+          { formattedValue: 'Diamond' },
+          { formattedValue: 'SinnohStars' },
+          { formattedValue: '8000' },
+          { formattedValue: 'DPP OU' },
+          { formattedValue: '3 - 2 - 0' },
+          { formattedValue: 'L vs BlackWhite (DPP OU)' },
+          { formattedValue: 'W vs Lysandre (DPP OU)' },
+          { formattedValue: 'L vs GreenLeaf (DPP OU)' },
+          { formattedValue: 'W vs N (DPP OU)' },
+          { formattedValue: 'W vs RubyRed (DPP OU)' },
+        ],
+      },
+      // SinnohStars - Cyrus
+      {
+        values: [
+          { formattedValue: 'Cyrus' },
+          { formattedValue: 'SinnohStars' },
+          { formattedValue: '7000' },
+          { formattedValue: 'DPP OU' },
+          { formattedValue: '1 - 4 - 0' },
+          { formattedValue: 'L vs XY (DPP OU)' },
+          { formattedValue: 'L vs Diantha (DPP OU)' },
+          { formattedValue: 'L vs YellowPika (DPP OU)' },
+          { formattedValue: 'L vs Ghetsis (DPP OU)' },
+          { formattedValue: 'L vs SapphireBlue (DPP OU)' },
+        ],
+      },
+      // UnovaUnited - Hilbert
+      {
+        values: [
+          { formattedValue: 'Hilbert' },
+          { formattedValue: 'UnovaUnited' },
+          { formattedValue: '6000' },
+          { formattedValue: 'BW OU' },
+          { formattedValue: '3 - 2 - 0' },
+          { formattedValue: 'L vs Calem (BW OU)' },
+          { formattedValue: 'L vs CrystalClear (BW OU)' },
+          { formattedValue: 'W vs EmeraldGreen (BW OU)' },
+          { formattedValue: 'W vs Platinum (BW OU)' },
+          { formattedValue: 'L vs TrainerRed (BW OU)' },
+        ],
+      },
+      // UnovaUnited - Hilda
+      {
+        values: [
+          { formattedValue: 'Hilda' },
+          { formattedValue: 'UnovaUnited' },
+          { formattedValue: '5000' },
+          { formattedValue: 'BW OU' },
+          { formattedValue: '3 - 2 - 0' },
+          { formattedValue: 'W vs Serena (BW OU)' },
+          { formattedValue: 'W vs SilverRocket (BW OU)' },
+          { formattedValue: 'L vs DiamondPearl (BW OU)' },
+          { formattedValue: 'W vs Pearl (BW OU)' },
+          { formattedValue: 'W vs BlueOak (BW OU)' },
+        ],
+      },
+      // UnovaUnited - N
+      {
+        values: [
+          { formattedValue: 'N' },
+          { formattedValue: 'UnovaUnited' },
+          { formattedValue: '4000' },
+          { formattedValue: 'BW OU' },
+          { formattedValue: '3 - 2 - 0' },
+          { formattedValue: 'W vs Lysandre (BW OU)' },
+          { formattedValue: 'L vs RubyRed (BW OU)' },
+          { formattedValue: 'W vs BlackWhite (BW OU)' },
+          { formattedValue: 'L vs Diamond (BW OU)' },
+          { formattedValue: 'W vs GreenLeaf (BW OU)' },
+        ],
+      },
+      // UnovaUnited - Ghetsis
+      {
+        values: [
+          { formattedValue: 'Ghetsis' },
+          { formattedValue: 'UnovaUnited' },
+          { formattedValue: '3000' },
+          { formattedValue: 'BW OU' },
+          { formattedValue: '2 - 3 - 0' },
+          { formattedValue: 'L vs Diantha (BW OU)' },
+          { formattedValue: 'L vs SapphireBlue (BW OU)' },
+          { formattedValue: 'L vs XY (BW OU)' },
+          { formattedValue: 'W vs Cyrus (BW OU)' },
+          { formattedValue: 'W vs YellowPika (BW OU)' },
+        ],
+      },
+      // KalosKings - Calem
+      {
+        values: [
+          { formattedValue: 'Calem' },
+          { formattedValue: 'KalosKings' },
+          { formattedValue: '2000' },
+          { formattedValue: 'XY OU' },
+          { formattedValue: '3 - 2 - 0' },
+          { formattedValue: 'W vs Hilbert (XY OU)' },
+          { formattedValue: 'L vs Platinum (XY OU)' },
+          { formattedValue: 'W vs CrystalClear (XY OU)' },
+          { formattedValue: 'L vs TrainerRed (XY OU)' },
+          { formattedValue: 'W vs EmeraldGreen (XY OU)' },
+        ],
+      },
+      // KalosKings - Serena
+      {
+        values: [
+          { formattedValue: 'Serena' },
+          { formattedValue: 'KalosKings' },
+          { formattedValue: '1000' },
+          { formattedValue: 'XY OU' },
+          { formattedValue: '2 - 3 - 0' },
+          { formattedValue: 'L vs Hilda (XY OU)' },
+          { formattedValue: 'L vs Pearl (XY OU)' },
+          { formattedValue: 'L vs SilverRocket (XY OU)' },
+          { formattedValue: 'W vs BlueOak (XY OU)' },
+          { formattedValue: 'W vs DiamondPearl (XY OU)' },
+        ],
+      },
+      // KalosKings - Lysandre
+      {
+        values: [
+          { formattedValue: 'Lysandre' },
+          { formattedValue: 'KalosKings' },
+          { formattedValue: '900' },
+          { formattedValue: 'XY OU' },
+          { formattedValue: '2 - 3 - 0' },
+          { formattedValue: 'L vs N (XY OU)' },
+          { formattedValue: 'L vs Diamond (XY OU)' },
+          { formattedValue: 'L vs RubyRed (XY OU)' },
+          { formattedValue: 'W vs GreenLeaf (XY OU)' },
+          { formattedValue: 'L vs BlackWhite (XY OU)' },
+        ],
+      },
+      // KalosKings - Diantha
+      {
+        values: [
+          { formattedValue: 'Diantha' },
+          { formattedValue: 'KalosKings' },
+          { formattedValue: '800' },
+          { formattedValue: 'XY OU' },
+          { formattedValue: '3 - 2 - 0' },
+          { formattedValue: 'W vs Ghetsis (XY OU)' },
+          { formattedValue: 'W vs Cyrus (XY OU)' },
+          { formattedValue: 'W vs SapphireBlue (XY OU)' },
+          { formattedValue: 'W vs YellowPika (XY OU)' },
+          { formattedValue: 'W vs XY (XY OU)' },
+        ],
+      },
+    ],
+  },
+};
+
+/**
  * Mock replay data for testing
  */
 export const mockReplayData = [

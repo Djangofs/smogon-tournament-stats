@@ -61,6 +61,8 @@ export function TournamentsPage() {
     isTeam: boolean;
     year: number;
     replayPostUrl?: string;
+    replaySource: 'thread' | 'embedded' | 'none';
+    transformer?: string;
   }) => {
     try {
       await createTournament(data).unwrap();

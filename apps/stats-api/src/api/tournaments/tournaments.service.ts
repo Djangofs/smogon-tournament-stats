@@ -146,12 +146,19 @@ export const createTournament = async ({
   replaySource?: 'thread' | 'embedded' | 'none';
   transformer?: string;
 }) => {
+  logger.info(
+    `Starting tournament creation process for ${name} with transformer: ${transformer}`
+  );
+
   let tournament: TournamentDatabase;
   const existingTournament = await tournamentsData.findTournament({ name });
   if (existingTournament) {
-    logger.info(`Tournament ${name} already exists`);
+    logger.info(
+      `Tournament ${name} already exists with ID: ${existingTournament.id}`
+    );
     tournament = existingTournament;
   } else {
+    logger.info(`Creating new tournament: ${name}`);
     tournament = await tournamentsData.createTournament({
       name,
       isOfficial,
@@ -159,37 +166,51 @@ export const createTournament = async ({
       year,
       replayPostUrl,
     });
+    logger.info(`Created tournament with ID: ${tournament.id}`);
   }
 
   // Extract data from spreadsheet
+  logger.info(`Extracting data from sheet: ${sheetName} (ID: ${sheetId})`);
   const spreadsheetData = await extractDataFromSheet({
     sheetName,
     sheetId,
   });
+  logger.info(
+    `Extracted spreadsheet data with ${spreadsheetData.data.rowData.length} rows`
+  );
 
   // Transform the data using the specified transformer
+  logger.info(`Transforming data using transformer: ${transformer}`);
   let tournamentData;
   switch (transformer) {
     case 'modern':
+      logger.info('Using Modern transformer');
       tournamentData = await TransformModernTournamentData({
         spreadsheetData,
       });
       break;
     case 'spl-middle':
+      logger.info('Using SPL Middle transformer');
       tournamentData = await TransformSPLMiddleTournamentData({
         spreadsheetData,
       });
       break;
     default:
+      logger.info('Using Legacy transformer');
       tournamentData = await TransformLegacyTournamentData({
         spreadsheetData,
       });
   }
 
+  logger.info(
+    `Transformation complete. Found ${tournamentData.players.length} players, ${tournamentData.teams.length} teams, ${tournamentData.rounds.length} rounds, and ${tournamentData.matches.length} matches`
+  );
+
   // Extract replays based on the replay source
   let replays: { player1: string; player2: string; replayUrl: string }[] = [];
   if (replaySource === 'thread' && replayPostUrl) {
     try {
+      logger.info(`Extracting replays from: ${replayPostUrl}`);
       replays = await extractReplays(replayPostUrl);
       logger.info(`Extracted ${replays.length} replays from ${replayPostUrl}`);
     } catch (error) {
@@ -213,36 +234,61 @@ export const createTournament = async ({
   // TODO: Refactor this into the ETL folders
 
   // Make any new teams
+  logger.info(`Creating ${tournamentData.teams.length} teams`);
   const teamPromises = tournamentData.teams.map((team) =>
     createTeam({ name: team.name })
   );
   const createdTeams = await Promise.all(teamPromises);
+  logger.info(`Created ${createdTeams.length} teams`);
 
   // Create the tournament_teams
+  logger.info(
+    `Creating tournament-team associations for tournament ID: ${tournament.id}`
+  );
   const tournamentId = tournament.id;
   const tournamentTeamPromises = createdTeams.map((team) =>
     createTournamentTeam({ tournamentId, teamId: team.id })
   );
   const tournamentTeams = await Promise.all(tournamentTeamPromises);
+  logger.info(`Created ${tournamentTeams.length} tournament-team associations`);
 
   // Make any new players
+  logger.info(`Creating ${tournamentData.players.length} players`);
   const uniquePlayers = [
     ...new Set(tournamentData.players.map((row) => row.player)),
   ];
+  logger.info(`Found ${uniquePlayers.length} unique players`);
   const playerPromises = uniquePlayers.map((player) =>
     createPlayer({ name: player as string })
   );
   const createdPlayers = await Promise.all(playerPromises);
+  logger.info(`Created ${createdPlayers.length} players`);
 
   // Create the tournament_players
+  logger.info(`Creating tournament-player associations`);
   const tournamentPlayerPromises = tournamentData.players.map((data) => {
-    const teamId = createdTeams.find((team) => data.team === team.name).id;
+    const teamId = createdTeams.find((team) => data.team === team.name)?.id;
+    if (!teamId) {
+      logger.error(`Could not find team ID for team: ${data.team}`);
+      return null;
+    }
+
     const tournamentTeamId = tournamentTeams.find(
       (team) => team.teamId === teamId
-    ).id;
+    )?.id;
+    if (!tournamentTeamId) {
+      logger.error(`Could not find tournament team ID for team ID: ${teamId}`);
+      return null;
+    }
+
     const playerId = createdPlayers.find(
       (player) => data.player === player.name
-    ).id;
+    )?.id;
+    if (!playerId) {
+      logger.error(`Could not find player ID for player: ${data.player}`);
+      return null;
+    }
+
     return createTournamentPlayer({
       tournamentTeamId,
       playerId,
@@ -250,38 +296,65 @@ export const createTournament = async ({
     });
   });
 
-  const tournamentPlayers = await Promise.all(tournamentPlayerPromises);
+  const tournamentPlayers = (
+    await Promise.all(tournamentPlayerPromises)
+  ).filter(Boolean);
+  logger.info(
+    `Created ${tournamentPlayers.length} tournament-player associations`
+  );
 
   // Create rounds and matches
+  logger.info(
+    `Creating ${tournamentData.rounds.length} rounds and their matches`
+  );
   for (const round of tournamentData.rounds) {
+    logger.info(`Creating round: ${round.name}`);
     const roundRecord = await createRound({
       tournamentId: tournament.id,
       name: round.name,
     });
+    logger.info(`Created round with ID: ${roundRecord.id}`);
 
     // Create matches for this round
-    const matchPromises = tournamentData.matches
-      .filter((match) => match.roundName === round.name)
-      .map(async (match) => {
-        const player1 = findTournamentPlayer(
-          match.player1,
-          tournamentPlayers,
-          createdPlayers
-        );
-        if (!player1) return null;
+    const roundMatches = tournamentData.matches.filter(
+      (match) => match.roundName === round.name
+    );
+    logger.info(
+      `Found ${roundMatches.length} matches for round: ${round.name}`
+    );
 
-        const player2 = findTournamentPlayer(
-          match.player2,
-          tournamentPlayers,
-          createdPlayers
-        );
-        if (!player2) return null;
+    const matchPromises = roundMatches.map(async (match) => {
+      logger.debug(`Processing match: ${match.player1} vs ${match.player2}`);
 
-        // Find a matching replay for this match using the pre-created map
-        const playerPairKey = [match.player1, match.player2].sort().join('|');
-        const replayUrl = matchReplayMap.get(playerPairKey);
+      const player1 = findTournamentPlayer(
+        match.player1,
+        tournamentPlayers,
+        createdPlayers
+      );
+      if (!player1) {
+        logger.error(`Could not find tournament player for: ${match.player1}`);
+        return null;
+      }
 
-        return createMatchWithGame({
+      const player2 = findTournamentPlayer(
+        match.player2,
+        tournamentPlayers,
+        createdPlayers
+      );
+      if (!player2) {
+        logger.error(`Could not find tournament player for: ${match.player2}`);
+        return null;
+      }
+
+      // Find a matching replay for this match using the pre-created map
+      const playerPairKey = [match.player1, match.player2].sort().join('|');
+      const replayUrl = matchReplayMap.get(playerPairKey);
+      if (replayUrl) {
+        logger.debug(`Found replay URL for match: ${playerPairKey}`);
+      }
+
+      try {
+        const result = await createMatchWithGame({
           roundId: roundRecord.id,
           currentPlayer: player1,
           opponentPlayer: player2,
@@ -298,10 +371,23 @@ export const createTournament = async ({
           replayUrl,
           stage: match.stage,
         });
-      });
+        logger.debug(`Created match with ID: ${result.id}`);
+        return result;
+      } catch (error) {
+        logger.error(
+          `Failed to create match: ${match.player1} vs ${match.player2}`,
+          error
+        );
+        return null;
+      }
+    });
 
-    await Promise.all(matchPromises);
+    const createdMatches = (await Promise.all(matchPromises)).filter(Boolean);
+    logger.info(
+      `Created ${createdMatches.length} matches for round: ${round.name}`
+    );
   }
 
+  logger.info(`Tournament creation process completed for: ${name}`);
   return tournament;
 };

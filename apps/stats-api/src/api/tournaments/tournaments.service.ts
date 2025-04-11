@@ -305,7 +305,7 @@ export const createTournament = async ({
 
   // Create rounds and matches
   logger.info(
-    `Creating ${tournamentData.rounds.length} rounds and their matches`
+    `Creating ${tournamentData.rounds.length} rounds and their ${tournamentData.matches.length} matches`
   );
   for (const round of tournamentData.rounds) {
     logger.info(`Creating round: ${round.name}`);

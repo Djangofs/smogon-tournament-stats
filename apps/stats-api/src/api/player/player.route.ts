@@ -3,6 +3,7 @@ import {
   getAllPlayers,
   linkPlayerRecords,
   getPlayerById,
+  addPlayerAlias,
 } from './player.service';
 import logger from '../../utils/logger';
 
@@ -58,6 +59,28 @@ export const getPlayerByIdRoute = async (req: Request, res: Response) => {
     logger.error('Error getting player:', error);
     res.status(500).json({
       error: error instanceof Error ? error.message : 'Failed to get player',
+    });
+  }
+};
+
+export const addPlayerAliasRoute = async (req: Request, res: Response) => {
+  try {
+    const { playerId, alias } = req.body;
+
+    if (!playerId || !alias) {
+      res.status(400).json({
+        error: 'Both playerId and alias are required',
+      });
+      return;
+    }
+
+    const result = await addPlayerAlias({ playerId, alias });
+    res.json(result);
+  } catch (error) {
+    logger.error('Error adding player alias:', error);
+    res.status(500).json({
+      error:
+        error instanceof Error ? error.message : 'Failed to add player alias',
     });
   }
 };

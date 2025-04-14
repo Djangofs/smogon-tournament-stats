@@ -8,6 +8,7 @@ import {
   getAllPlayersRoute,
   linkPlayerRecordsRoute,
   getPlayerByIdRoute,
+  addPlayerAliasRoute,
 } from './api/player/player.route';
 import { getMatchByIdRoute } from './api/match/match.route';
 import { requireAdminRole } from './middleware/auth.middleware';
@@ -35,6 +36,7 @@ app.get('/matches/:id', getMatchByIdRoute);
 
 // Protected routes - require admin role
 app.post('/players/link', requireAdminRole, linkPlayerRecordsRoute);
+app.post('/players/:id/alias', requireAdminRole, addPlayerAliasRoute);
 
 // Error handling middleware
 app.use(

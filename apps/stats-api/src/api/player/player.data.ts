@@ -287,6 +287,7 @@ const getPlayerById = async ({ id }: { id: string }) => {
   return client.player.findUnique({
     where: { id },
     include: {
+      aliases: true,
       matches: {
         include: {
           match: {
@@ -309,6 +310,29 @@ const getPlayerById = async ({ id }: { id: string }) => {
   });
 };
 
+const addPlayerAlias = async ({
+  playerId,
+  alias,
+}: {
+  playerId: string;
+  alias: string;
+}): Promise<void> => {
+  const player = await client.player.findUnique({
+    where: { id: playerId },
+  });
+
+  if (!player) {
+    throw new Error(`Player with ID ${playerId} not found`);
+  }
+
+  await client.playerAlias.create({
+    data: {
+      playerId,
+      name: alias,
+    },
+  });
+};
+
 export const playerData = {
   getAllPlayers,
   createPlayer,
@@ -317,8 +341,10 @@ export const playerData = {
   createTournamentPlayer,
   findTournamentPlayer,
   updatePlayerName,
+  updatePlayerReferences,
+  linkPlayerRecords,
   getPlayerNames,
   findPlayerByName,
-  linkPlayerRecords,
   getPlayerById,
+  addPlayerAlias,
 };

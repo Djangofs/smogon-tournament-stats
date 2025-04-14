@@ -20,7 +20,7 @@ const slideUp = keyframes`
   }
 `;
 
-const Overlay = styled.div`
+export const Overlay = styled.div`
   position: fixed;
   top: 0;
   left: 0;
@@ -34,7 +34,7 @@ const Overlay = styled.div`
   animation: ${fadeIn} 0.2s ease-out;
 `;
 
-const ModalContent = styled.div`
+export const ModalContent = styled.div`
   background: white;
   padding: 2rem;
   border-radius: 8px;
@@ -44,20 +44,20 @@ const ModalContent = styled.div`
   animation: ${slideUp} 0.3s ease-out;
 `;
 
-const ModalHeader = styled.div`
+export const ModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
 `;
 
-const ModalTitle = styled.h2`
+export const ModalTitle = styled.h2`
   margin: 0;
   font-size: 1.5rem;
   color: #333;
 `;
 
-const StyledCloseButton = styled.button.attrs({ type: 'button' })`
+export const StyledCloseButton = styled.button.attrs({ type: 'button' })`
   background: none;
   border: none;
   font-size: 1.5rem;
@@ -76,19 +76,19 @@ const StyledCloseButton = styled.button.attrs({ type: 'button' })`
   }
 `;
 
-const FormGroup = styled.div`
+export const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 1rem;
 `;
 
-const StyledLabel = styled.label`
+export const StyledLabel = styled.label`
   font-weight: 500;
   color: #333;
 `;
 
-const StyledInput = styled.input`
+export const StyledInput = styled.input`
   padding: 0.5rem;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -118,7 +118,7 @@ const StyledCheckbox = styled.input.attrs({ type: 'checkbox' })`
   cursor: pointer;
 `;
 
-const StyledSubmitButton = styled.button.attrs({ type: 'submit' })`
+export const StyledSubmitButton = styled.button.attrs({ type: 'submit' })`
   background-color: #0066cc;
   color: white;
   border: none;

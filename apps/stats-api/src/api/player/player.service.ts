@@ -28,6 +28,7 @@ interface PlayerDetails {
   matchesLost: number;
   deadGames: number;
   matches: PlayerMatch[];
+  aliases: string[];
 }
 
 export interface PlayerRecord {
@@ -215,6 +216,7 @@ export const getPlayerById = async (id: string): Promise<PlayerDetails> => {
     matchesLost,
     deadGames,
     matches,
+    aliases: player.aliases.map((alias) => alias.name),
   };
 };
 
@@ -231,27 +233,19 @@ export const addPlayerAlias = async ({
     throw new Error(`Player with ID ${playerId} not found`);
   }
 
-  // Check if the alias already exists for this player
+  // Check if the alias already exists for any player
   const existingPlayer = await playerData.findPlayerByName({ name: alias });
   if (existingPlayer) {
-    if (existingPlayer.id === playerId) {
-      logger.info(`Alias ${alias} is already linked to player ${player.name}`);
-      return {
-        id: player.id,
-        name: player.name,
-      };
-    } else {
-      throw new Error(
-        `Alias ${alias} is already linked to a different player: ${existingPlayer.currentName}`
-      );
-    }
+    throw new Error(
+      `Alias ${alias} is already in use by player: ${existingPlayer.currentName}`
+    );
   }
 
-  // Link the alias to the player
+  // Add the alias to the player's aliases
   logger.info(`Adding alias ${alias} to player ${player.name}`);
-  await playerData.linkPlayerRecords({
-    oldName: alias,
-    newName: player.name,
+  await playerData.addPlayerAlias({
+    playerId,
+    alias,
   });
 
   return {

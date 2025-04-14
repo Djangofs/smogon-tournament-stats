@@ -1,6 +1,9 @@
 import { format } from 'date-fns';
 import { useParams, Link } from 'react-router-dom';
-import { useGetPlayerByIdQuery } from '../store/apis/players.api';
+import {
+  useGetPlayerByIdQuery,
+  useAddPlayerAliasMutation,
+} from '../store/apis/players.api';
 import { Container } from '../components/layout/layout';
 import { Table } from '../components/table/table';
 import { PageTitle } from '../components/typography/page-title';
@@ -19,6 +22,18 @@ import {
   useFilterDropdown,
 } from '../components/filters/filter-dropdown';
 import { YearFilterComponent } from '../components/filters/year-filter';
+import { Button } from '../components/button/button';
+import {
+  Overlay,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  StyledCloseButton,
+  FormGroup,
+  StyledLabel,
+  StyledInput,
+  StyledSubmitButton,
+} from '../components/modal/modal';
 
 const StatsContainer = styled.div`
   display: grid;
@@ -143,6 +158,21 @@ const FilterActions = styled.div`
   margin-top: 1rem;
 `;
 
+const AliasesContainer = styled.div`
+  margin-bottom: 2rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+`;
+
+const AliasTag = styled.span`
+  background: #f0f0f0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #666;
+`;
+
 type SortColumn =
   | 'Date'
   | 'Opponent'
@@ -155,6 +185,66 @@ type FilterValue = {
   value: string;
 };
 
+interface AddAliasModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  playerId: string;
+  playerName: string;
+}
+
+function AddAliasModal({
+  isOpen,
+  onClose,
+  playerId,
+  playerName,
+}: AddAliasModalProps) {
+  const [addAlias, { isLoading }] = useAddPlayerAliasMutation();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const alias = formData.get('alias') as string;
+
+    try {
+      await addAlias({ playerId, alias }).unwrap();
+      onClose();
+    } catch (error) {
+      console.error('Failed to add alias:', error);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <Overlay onClick={onClose}>
+      <ModalContent onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+        <ModalHeader>
+          <ModalTitle>Add Alias for {playerName}</ModalTitle>
+          <StyledCloseButton onClick={onClose} disabled={isLoading}>
+            &times;
+          </StyledCloseButton>
+        </ModalHeader>
+        <form onSubmit={handleSubmit}>
+          <FormGroup>
+            <StyledLabel htmlFor="alias">Alias Name</StyledLabel>
+            <StyledInput
+              type="text"
+              id="alias"
+              name="alias"
+              required
+              placeholder="Enter alias name..."
+              disabled={isLoading}
+            />
+          </FormGroup>
+          <StyledSubmitButton disabled={isLoading}>
+            {isLoading ? 'Adding...' : 'Add Alias'}
+          </StyledSubmitButton>
+        </form>
+      </ModalContent>
+    </Overlay>
+  );
+}
+
 export function PlayerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const {
@@ -163,6 +253,7 @@ export function PlayerDetailPage() {
     isError,
     error,
   } = useGetPlayerByIdQuery(id || '');
+  const [isAliasModalOpen, setIsAliasModalOpen] = useState(false);
 
   const [startYear, setStartYear] = useState<string>('');
   const [endYear, setEndYear] = useState<string>('');
@@ -340,7 +431,26 @@ export function PlayerDetailPage() {
   return (
     <Container>
       <PageTitle>{player.name}</PageTitle>
-      <p>View detailed statistics and match history for {player.name}</p>
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+        <p>View detailed statistics and match history for {player.name}</p>
+        <Button onClick={() => setIsAliasModalOpen(true)}>Add Alias</Button>
+      </div>
+
+      {player.aliases.length > 0 && (
+        <AliasesContainer>
+          <span>Also known as:</span>
+          {player.aliases.map((alias) => (
+            <AliasTag key={alias}>{alias}</AliasTag>
+          ))}
+        </AliasesContainer>
+      )}
+
+      <AddAliasModal
+        isOpen={isAliasModalOpen}
+        onClose={() => setIsAliasModalOpen(false)}
+        playerId={player.id}
+        playerName={player.name}
+      />
 
       <FilterContainer>
         <FilterHeader>

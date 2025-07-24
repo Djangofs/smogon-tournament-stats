@@ -141,32 +141,6 @@ const updatePlayerName = async ({
   }
 };
 
-const updatePlayerReferences = async ({
-  oldPlayerId,
-  newPlayerId,
-}: {
-  oldPlayerId: string;
-  newPlayerId: string;
-}): Promise<void> => {
-  // Update all Player_Game records
-  await client.player_Game.updateMany({
-    where: { playerId: oldPlayerId },
-    data: { playerId: newPlayerId },
-  });
-
-  // Update all Player_Match records
-  await client.player_Match.updateMany({
-    where: { playerId: oldPlayerId },
-    data: { playerId: newPlayerId },
-  });
-
-  // Update all Tournament_Player records
-  await client.tournament_Player.updateMany({
-    where: { playerId: oldPlayerId },
-    data: { playerId: newPlayerId },
-  });
-};
-
 const linkPlayerRecords = async ({
   oldName,
   newName,
@@ -174,12 +148,27 @@ const linkPlayerRecords = async ({
   oldName: string;
   newName: string;
 }): Promise<PlayerRecord> => {
+  // Validate input parameters
+  if (!oldName?.trim() || !newName?.trim()) {
+    throw new Error(
+      'Both oldName and newName are required and cannot be empty'
+    );
+  }
+
+  if (oldName.trim() === newName.trim()) {
+    throw new Error('Cannot link a player to themselves');
+  }
+
   // Find both players
   const oldPlayer = await findPlayerByName({ name: oldName });
   const newPlayer = await findPlayerByName({ name: newName });
 
-  if (!oldPlayer || !newPlayer) {
-    throw new Error('Both players must exist to link records');
+  if (!oldPlayer) {
+    throw new Error(`Player with name "${oldName}" not found`);
+  }
+
+  if (!newPlayer) {
+    throw new Error(`Player with name "${newName}" not found`);
   }
 
   if (oldPlayer.id === newPlayer.id) {
@@ -192,30 +181,69 @@ const linkPlayerRecords = async ({
     };
   }
 
-  // Update all references to point to the new player ID
-  await updatePlayerReferences({
-    oldPlayerId: oldPlayer.id,
-    newPlayerId: newPlayer.id,
-  });
+  try {
+    // Use a transaction to ensure data consistency
+    const result = await client.$transaction(async (prisma) => {
+      // Update all references to point to the new player ID
+      await prisma.player_Game.updateMany({
+        where: { playerId: oldPlayer.id },
+        data: { playerId: newPlayer.id },
+      });
 
-  // Create an alias for the old name
-  await client.playerAlias.create({
-    data: {
-      playerId: newPlayer.id,
-      name: oldPlayer.currentName,
-    },
-  });
+      await prisma.player_Match.updateMany({
+        where: { playerId: oldPlayer.id },
+        data: { playerId: newPlayer.id },
+      });
 
-  // Delete the old player record since we've moved everything to the new one
-  await client.player.delete({
-    where: { id: oldPlayer.id },
-  });
+      await prisma.tournament_Player.updateMany({
+        where: { playerId: oldPlayer.id },
+        data: { playerId: newPlayer.id },
+      });
 
-  logger.info(`Linked player records: ${oldName} -> ${newPlayer.currentName}`);
-  return {
-    id: newPlayer.id,
-    name: newPlayer.currentName,
-  };
+      // Check if an alias already exists to avoid conflicts
+      const existingAlias = await prisma.playerAlias.findFirst({
+        where: {
+          playerId: newPlayer.id,
+          name: oldPlayer.currentName,
+        },
+      });
+
+      if (!existingAlias) {
+        // Create an alias for the old name
+        await prisma.playerAlias.create({
+          data: {
+            playerId: newPlayer.id,
+            name: oldPlayer.currentName,
+          },
+        });
+      }
+
+      // Delete the old player record since we've moved everything to the new one
+      await prisma.player.delete({
+        where: { id: oldPlayer.id },
+      });
+
+      return {
+        id: newPlayer.id,
+        name: newPlayer.currentName,
+      };
+    });
+
+    logger.info(
+      `Successfully linked player records: ${oldName} -> ${newPlayer.currentName}`
+    );
+    return result;
+  } catch (error) {
+    logger.error(
+      `Failed to link player records ${oldName} -> ${newName}:`,
+      error
+    );
+    throw new Error(
+      `Failed to link player records: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`
+    );
+  }
 };
 
 const getPlayerNames = async ({
@@ -341,7 +369,6 @@ export const playerData = {
   createTournamentPlayer,
   findTournamentPlayer,
   updatePlayerName,
-  updatePlayerReferences,
   linkPlayerRecords,
   getPlayerNames,
   findPlayerByName,

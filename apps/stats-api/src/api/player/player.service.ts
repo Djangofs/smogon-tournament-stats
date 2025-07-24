@@ -1,24 +1,24 @@
 import { playerData } from './player.data';
 import logger from '../../utils/logger';
 
+interface PlayerMatch {
+  id: string;
+  winner: boolean | null;
+  generation: string;
+  tier: string;
+  stage: string;
+  year: number;
+  tournamentName: string;
+  opponentName: string;
+  opponentId: string;
+}
+
 interface PlayerWithStats {
   id: string;
   name: string;
   matchesWon: number;
   matchesLost: number;
   deadGames: number;
-}
-
-interface PlayerMatch {
-  id: string;
-  winner: boolean | null;
-  generation: string;
-  tier: string;
-  stage: string | null;
-  year: number;
-  tournamentName: string;
-  opponentName: string;
-  opponentId: string;
 }
 
 interface PlayerDetails {
@@ -143,36 +143,19 @@ export const linkPlayerRecords = async ({
   oldName: string;
   newName: string;
 }): Promise<PlayerRecord> => {
-  // Find both players
-  const oldPlayer = await playerData.findPlayerByName({ name: oldName });
-  const newPlayer = await playerData.findPlayerByName({ name: newName });
-
-  if (!oldPlayer || !newPlayer) {
-    throw new Error('Both players must exist to link records');
+  // Use the data layer implementation which properly merges all records
+  const result = await playerData.linkPlayerRecords({ oldName, newName });
+  
+  // Convert data layer result to service layer format (add aliases)
+  const linkedPlayer = await playerData.findPlayerByName({ name: result.name });
+  if (!linkedPlayer) {
+    throw new Error('Failed to retrieve linked player after merge');
   }
 
-  if (oldPlayer.id === newPlayer.id) {
-    logger.info(
-      `Players ${oldName} and ${newName} are already the same record`
-    );
-    return {
-      id: oldPlayer.id,
-      name: oldPlayer.currentName,
-      aliases: oldPlayer.aliases,
-    };
-  }
-
-  // Link the records by creating an alias and updating the current name
-  await playerData.updatePlayerName({
-    playerId: oldPlayer.id,
-    newName: newPlayer.currentName,
-  });
-
-  logger.info(`Linked player records: ${oldName} -> ${newPlayer.currentName}`);
   return {
-    id: oldPlayer.id,
-    name: newPlayer.currentName,
-    aliases: newPlayer.aliases,
+    id: result.id,
+    name: result.name,
+    aliases: linkedPlayer.aliases,
   };
 };
 

@@ -136,6 +136,16 @@ export const createTournamentPlayer = async ({
   });
 };
 
+/**
+ * Links two player records by merging all associated data from one player to another
+ * This operation moves all matches, games, and tournament records from the old player
+ * to the new player, creates an alias for the old name, and deletes the old player record
+ *
+ * @param oldName - Name of the player to be merged (will be deleted after merge)
+ * @param newName - Name of the target player (will receive all merged data)
+ * @returns Promise resolving to the updated player record with all aliases
+ * @throws Error if validation fails, players don't exist, or merge operation fails
+ */
 export const linkPlayerRecords = async ({
   oldName,
   newName,
@@ -143,20 +153,30 @@ export const linkPlayerRecords = async ({
   oldName: string;
   newName: string;
 }): Promise<PlayerRecord> => {
-  // Use the data layer implementation which properly merges all records
-  const result = await playerData.linkPlayerRecords({ oldName, newName });
-  
-  // Convert data layer result to service layer format (add aliases)
-  const linkedPlayer = await playerData.findPlayerByName({ name: result.name });
-  if (!linkedPlayer) {
-    throw new Error('Failed to retrieve linked player after merge');
-  }
+  try {
+    // Use the data layer implementation which properly merges all records
+    const result = await playerData.linkPlayerRecords({ oldName, newName });
 
-  return {
-    id: result.id,
-    name: result.name,
-    aliases: linkedPlayer.aliases,
-  };
+    // Convert data layer result to service layer format (add aliases)
+    const linkedPlayer = await playerData.findPlayerByName({
+      name: result.name,
+    });
+    if (!linkedPlayer) {
+      throw new Error('Failed to retrieve linked player after merge');
+    }
+
+    return {
+      id: result.id,
+      name: result.name,
+      aliases: linkedPlayer.aliases,
+    };
+  } catch (error) {
+    logger.error(
+      `Error linking player records ${oldName} -> ${newName}:`,
+      error
+    );
+    throw error;
+  }
 };
 
 export const getPlayerById = async (id: string): Promise<PlayerDetails> => {

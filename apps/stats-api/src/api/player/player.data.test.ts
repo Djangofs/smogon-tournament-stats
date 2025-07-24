@@ -44,37 +44,37 @@ describe('playerData.linkPlayerRecords', () => {
     it('should reject empty oldName', async () => {
       await expect(
         playerData.linkPlayerRecords({ oldName: '', newName: 'ValidName' })
-      ).rejects.toThrow('Both oldName and newName are required and cannot be empty');
+      ).rejects.toThrow('Failed to link player records: oldName is required and cannot be empty');
     });
 
     it('should reject empty newName', async () => {
       await expect(
         playerData.linkPlayerRecords({ oldName: 'ValidName', newName: '' })
-      ).rejects.toThrow('Both oldName and newName are required and cannot be empty');
+      ).rejects.toThrow('Failed to link player records: newName is required and cannot be empty');
     });
 
     it('should reject null oldName', async () => {
       await expect(
         playerData.linkPlayerRecords({ oldName: null as any, newName: 'ValidName' })
-      ).rejects.toThrow('Both oldName and newName are required and cannot be empty');
+      ).rejects.toThrow('Failed to link player records: oldName is required and cannot be empty');
     });
 
     it('should reject whitespace-only names', async () => {
       await expect(
         playerData.linkPlayerRecords({ oldName: '   ', newName: 'ValidName' })
-      ).rejects.toThrow('Both oldName and newName are required and cannot be empty');
+      ).rejects.toThrow('Failed to link player records: oldName is required and cannot be empty');
     });
 
     it('should reject identical names', async () => {
       await expect(
         playerData.linkPlayerRecords({ oldName: 'SameName', newName: 'SameName' })
-      ).rejects.toThrow('Cannot link a player to themselves');
+      ).rejects.toThrow('Failed to link player records: Cannot link a player to themselves');
     });
 
     it('should reject identical names with different casing', async () => {
       await expect(
         playerData.linkPlayerRecords({ oldName: 'PlayerName', newName: 'playername' })
-      ).rejects.toThrow('Cannot link a player to themselves');
+      ).rejects.toThrow('Failed to link player records: Cannot link a player to themselves');
     });
   });
 
@@ -91,7 +91,7 @@ describe('playerData.linkPlayerRecords', () => {
 
       await expect(
         playerData.linkPlayerRecords({ oldName: 'NonExistent', newName: 'NewPlayer' })
-      ).rejects.toThrow('Player with name "NonExistent" not found');
+      ).rejects.toThrow('Failed to link player records: Player with name "NonExistent" not found');
     });
 
     it('should reject when newPlayer does not exist', async () => {
@@ -106,28 +106,27 @@ describe('playerData.linkPlayerRecords', () => {
 
       await expect(
         playerData.linkPlayerRecords({ oldName: 'OldPlayer', newName: 'NonExistent' })
-      ).rejects.toThrow('Player with name "NonExistent" not found');
+      ).rejects.toThrow('Failed to link player records: Player with name "NonExistent" not found');
     });
 
-    it('should handle case where players are already the same record', async () => {
+    it('should reject when players are already the same record', async () => {
       const samePlayer = {
         id: 'same-player-id',
         currentName: 'PlayerName',
         aliases: ['Alias1'],
       };
 
-      jest.spyOn(playerData, 'findPlayerByName')
-        .mockResolvedValue(samePlayer);
+      jest.spyOn(playerData, 'findPlayerByName').mockResolvedValue(samePlayer);
 
-      const result = await playerData.linkPlayerRecords({ 
-        oldName: 'PlayerName', 
-        newName: 'Alias1' 
-      });
+      await expect(
+        playerData.linkPlayerRecords({
+          oldName: 'PlayerName',
+          newName: 'Alias1',
+        })
+      ).rejects.toThrow(
+        'Failed to link player records: Players are already the same record'
+      );
 
-      expect(result).toEqual({
-        id: 'same-player-id',
-        name: 'PlayerName',
-      });
       expect(mockLogger.info).toHaveBeenCalledWith(
         'Players PlayerName and Alias1 are already the same record'
       );

@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { z } from 'zod';
 import logger from '../../utils/logger';
 
 const client = new PrismaClient();
@@ -7,6 +8,18 @@ interface PlayerRecord {
   id: string;
   name: string;
 }
+
+// Validation schema for linking player records
+const linkPlayerRecordsSchema = z.object({
+  oldName: z.string().min(1, 'oldName is required and cannot be empty'),
+  newName: z.string().min(1, 'newName is required and cannot be empty'),
+}).refine(
+  (data) => data.oldName.trim().toLowerCase() !== data.newName.trim().toLowerCase(),
+  {
+    message: 'Cannot link a player to themselves',
+    path: ['newName'],
+  }
+);
 
 const getAllPlayers = async ({
   generation,
@@ -141,25 +154,34 @@ const updatePlayerName = async ({
   }
 };
 
-const linkPlayerRecords = async ({
-  oldName,
-  newName,
-}: {
-  oldName: string;
-  newName: string;
-}): Promise<PlayerRecord> => {
-  // Validate input parameters
-  if (!oldName?.trim() || !newName?.trim()) {
-    throw new Error(
-      'Both oldName and newName are required and cannot be empty'
-    );
+/**
+ * Validates input parameters for linking player records
+ * @param oldName - Name of the player to be merged
+ * @param newName - Name of the target player
+ * @throws Error if validation fails
+ */
+const validateLinkingInput = (oldName: string, newName: string): void => {
+  try {
+    linkPlayerRecordsSchema.parse({ oldName, newName });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const message = error.errors.map(e => e.message).join(', ');
+      throw new Error(message);
+    }
+    throw error;
   }
+};
 
-  if (oldName.trim() === newName.trim()) {
-    throw new Error('Cannot link a player to themselves');
-  }
-
-  // Find both players
+/**
+ * Validates that both players exist and are different
+ * @param oldName - Name of the player to be merged
+ * @param newName - Name of the target player
+ * @returns Object containing both player records
+ */
+const validatePlayerExistence = async (
+  oldName: string, 
+  newName: string
+): Promise<{ oldPlayer: NonNullable<Awaited<ReturnType<typeof findPlayerByName>>>, newPlayer: NonNullable<Awaited<ReturnType<typeof findPlayerByName>>> }> => {
   const oldPlayer = await findPlayerByName({ name: oldName });
   const newPlayer = await findPlayerByName({ name: newName });
 
@@ -175,50 +197,100 @@ const linkPlayerRecords = async ({
     logger.info(
       `Players ${oldName} and ${newName} are already the same record`
     );
-    return {
-      id: oldPlayer.id,
-      name: oldPlayer.currentName,
-    };
+    throw new Error('Players are already the same record');
   }
 
+  return { oldPlayer, newPlayer };
+};
+
+/**
+ * Updates all player references to point to the new player
+ * @param prisma - Prisma transaction client
+ * @param oldPlayerId - ID of player to be merged
+ * @param newPlayerId - ID of target player
+ */
+const updatePlayerReferences = async (
+  prisma: any,
+  oldPlayerId: string,
+  newPlayerId: string
+): Promise<void> => {
+  await Promise.all([
+    prisma.player_Game.updateMany({
+      where: { playerId: oldPlayerId },
+      data: { playerId: newPlayerId },
+    }),
+    prisma.player_Match.updateMany({
+      where: { playerId: oldPlayerId },
+      data: { playerId: newPlayerId },
+    }),
+    prisma.tournament_Player.updateMany({
+      where: { playerId: oldPlayerId },
+      data: { playerId: newPlayerId },
+    }),
+  ]);
+};
+
+/**
+ * Creates an alias for the old player name if it doesn't already exist
+ * @param prisma - Prisma transaction client
+ * @param newPlayerId - ID of target player
+ * @param oldPlayerName - Name to add as alias
+ */
+const createPlayerAlias = async (
+  prisma: any,
+  newPlayerId: string,
+  oldPlayerName: string
+): Promise<void> => {
+  const existingAlias = await prisma.playerAlias.findFirst({
+    where: {
+      playerId: newPlayerId,
+      name: oldPlayerName,
+    },
+  });
+
+  if (!existingAlias) {
+    await prisma.playerAlias.create({
+      data: {
+        playerId: newPlayerId,
+        name: oldPlayerName,
+      },
+    });
+  }
+};
+
+/**
+ * Links two player records by merging all associated data
+ * Moves all matches, games, and tournament records from oldPlayer to newPlayer,
+ * creates an alias for the old name, and deletes the old player record
+ * 
+ * @param oldName - Name of the player to be merged (will be deleted)
+ * @param newName - Name of the target player (will receive all data)
+ * @returns Promise resolving to the updated player record
+ * @throws Error if validation fails or players don't exist
+ */
+const linkPlayerRecords = async ({
+  oldName,
+  newName,
+}: {
+  oldName: string;
+  newName: string;
+}): Promise<PlayerRecord> => {
   try {
-    // Use a transaction to ensure data consistency
+    // Validate input parameters
+    validateLinkingInput(oldName, newName);
+
+    // Validate player existence and get records
+    const { oldPlayer, newPlayer } = await validatePlayerExistence(oldName, newName);
+
+    // Execute all operations in a transaction
     const result = await client.$transaction(async (prisma) => {
-      // Update all references to point to the new player ID
-      await prisma.player_Game.updateMany({
-        where: { playerId: oldPlayer.id },
-        data: { playerId: newPlayer.id },
-      });
+      // Update all references to point to the new player
+      await updatePlayerReferences(prisma, oldPlayer.id, newPlayer.id);
 
-      await prisma.player_Match.updateMany({
-        where: { playerId: oldPlayer.id },
-        data: { playerId: newPlayer.id },
-      });
+      // Create alias for the old name
+      await createPlayerAlias(prisma, newPlayer.id, oldPlayer.currentName);
 
-      await prisma.tournament_Player.updateMany({
-        where: { playerId: oldPlayer.id },
-        data: { playerId: newPlayer.id },
-      });
-
-      // Check if an alias already exists to avoid conflicts
-      const existingAlias = await prisma.playerAlias.findFirst({
-        where: {
-          playerId: newPlayer.id,
-          name: oldPlayer.currentName,
-        },
-      });
-
-      if (!existingAlias) {
-        // Create an alias for the old name
-        await prisma.playerAlias.create({
-          data: {
-            playerId: newPlayer.id,
-            name: oldPlayer.currentName,
-          },
-        });
-      }
-
-      // Delete the old player record since we've moved everything to the new one
+      // Delete the old player record
       await prisma.player.delete({
         where: { id: oldPlayer.id },
       });

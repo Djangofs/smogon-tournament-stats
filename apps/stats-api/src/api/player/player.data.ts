@@ -246,7 +246,7 @@ const createPlayerAlias = async (
  * Links two player records by merging all associated data
  * Moves all matches, games, and tournament records from oldPlayer to newPlayer,
  * creates an alias for the old name, and deletes the old player record
- * 
+ *
  * @param oldName - Name of the player to be merged (will be deleted)
  * @param newName - Name of the target player (will receive all data)
  * @returns Promise resolving to the updated player record
@@ -258,10 +258,7 @@ const linkPlayerRecords = async ({
 }: {
   oldName: string;
   newName: string;
-}, 
-// Allow dependency injection for testing
-findPlayerByNameFn = findPlayerByName
-): Promise<PlayerRecord> => {
+}): Promise<PlayerRecord> => {
   try {
     // Validate input parameters
     if (!oldName?.trim() || !newName?.trim()) {
@@ -275,8 +272,8 @@ findPlayerByNameFn = findPlayerByName
     }
 
     // Validate player existence and get records
-    const oldPlayer = await findPlayerByNameFn({ name: oldName });
-    const newPlayer = await findPlayerByNameFn({ name: newName });
+    const oldPlayer = await findPlayerByName({ name: oldName });
+    const newPlayer = await findPlayerByName({ name: newName });
 
     if (!oldPlayer) {
       throw new Error(`Player with name "${oldName}" not found`);
@@ -406,13 +403,9 @@ export const playerData = {
   createTournamentPlayer,
   findTournamentPlayer,
   updatePlayerName,
-  linkPlayerRecords: (params: { oldName: string; newName: string }) => 
-    linkPlayerRecords(params, findPlayerByName),
+  linkPlayerRecords,
   getPlayerNames,
   findPlayerByName,
   getPlayerById,
   addPlayerAlias,
 };
-
-// Export for testing
-export { linkPlayerRecords, findPlayerByName };

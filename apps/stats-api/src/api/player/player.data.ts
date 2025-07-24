@@ -141,102 +141,6 @@ const updatePlayerName = async ({
   }
 };
 
-const updatePlayerReferences = async ({
-  oldPlayerId,
-  newPlayerId,
-}: {
-  oldPlayerId: string;
-  newPlayerId: string;
-}): Promise<void> => {
-  // Update all Player_Game records
-  await client.player_Game.updateMany({
-    where: { playerId: oldPlayerId },
-    data: { playerId: newPlayerId },
-  });
-
-  // Update all Player_Match records
-  await client.player_Match.updateMany({
-    where: { playerId: oldPlayerId },
-    data: { playerId: newPlayerId },
-  });
-
-  // Update all Tournament_Player records
-  await client.tournament_Player.updateMany({
-    where: { playerId: oldPlayerId },
-    data: { playerId: newPlayerId },
-  });
-};
-
-const linkPlayerRecords = async ({
-  oldName,
-  newName,
-}: {
-  oldName: string;
-  newName: string;
-}): Promise<PlayerRecord> => {
-  // Find both players
-  const oldPlayer = await findPlayerByName({ name: oldName });
-  const newPlayer = await findPlayerByName({ name: newName });
-
-  if (!oldPlayer || !newPlayer) {
-    throw new Error('Both players must exist to link records');
-  }
-
-  if (oldPlayer.id === newPlayer.id) {
-    logger.info(
-      `Players ${oldName} and ${newName} are already the same record`
-    );
-    return {
-      id: oldPlayer.id,
-      name: oldPlayer.currentName,
-    };
-  }
-
-  // Update all references to point to the new player ID
-  await updatePlayerReferences({
-    oldPlayerId: oldPlayer.id,
-    newPlayerId: newPlayer.id,
-  });
-
-  // Create an alias for the old name
-  await client.playerAlias.create({
-    data: {
-      playerId: newPlayer.id,
-      name: oldPlayer.currentName,
-    },
-  });
-
-  // Delete the old player record since we've moved everything to the new one
-  await client.player.delete({
-    where: { id: oldPlayer.id },
-  });
-
-  logger.info(`Linked player records: ${oldName} -> ${newPlayer.currentName}`);
-  return {
-    id: newPlayer.id,
-    name: newPlayer.currentName,
-  };
-};
-
-const getPlayerNames = async ({
-  playerId,
-}: {
-  playerId: string;
-}): Promise<string[]> => {
-  const player = await client.player.findUnique({
-    where: { id: playerId },
-    include: {
-      aliases: true,
-    },
-  });
-
-  if (!player) {
-    throw new Error(`Player with ID ${playerId} not found`);
-  }
-
-  return [player.name, ...player.aliases.map((alias) => alias.name)];
-};
-
 const findPlayerByName = async ({
   name,
 }: {
@@ -281,6 +185,164 @@ const findPlayerByName = async ({
   }
 
   return null;
+};
+
+/**
+ * Updates all player references to point to the new player
+ * @param prisma - Prisma transaction client
+ * @param oldPlayerId - ID of player to be merged
+ * @param newPlayerId - ID of target player
+ */
+const updatePlayerReferences = async (
+  prisma: any,
+  oldPlayerId: string,
+  newPlayerId: string
+): Promise<void> => {
+  await Promise.all([
+    prisma.player_Game.updateMany({
+      where: { playerId: oldPlayerId },
+      data: { playerId: newPlayerId },
+    }),
+    prisma.player_Match.updateMany({
+      where: { playerId: oldPlayerId },
+      data: { playerId: newPlayerId },
+    }),
+    prisma.tournament_Player.updateMany({
+      where: { playerId: oldPlayerId },
+      data: { playerId: newPlayerId },
+    }),
+  ]);
+};
+
+/**
+ * Creates an alias for the old player name if it doesn't already exist
+ * @param prisma - Prisma transaction client
+ * @param newPlayerId - ID of target player
+ * @param oldPlayerName - Name to add as alias
+ */
+const createPlayerAlias = async (
+  prisma: any,
+  newPlayerId: string,
+  oldPlayerName: string
+): Promise<void> => {
+  const existingAlias = await prisma.playerAlias.findFirst({
+    where: {
+      playerId: newPlayerId,
+      name: oldPlayerName,
+    },
+  });
+
+  if (!existingAlias) {
+    await prisma.playerAlias.create({
+      data: {
+        playerId: newPlayerId,
+        name: oldPlayerName,
+      },
+    });
+  }
+};
+
+/**
+ * Links two player records by merging all associated data
+ * Moves all matches, games, and tournament records from oldPlayer to newPlayer,
+ * creates an alias for the old name, and deletes the old player record
+ *
+ * @param oldName - Name of the player to be merged (will be deleted)
+ * @param newName - Name of the target player (will receive all data)
+ * @returns Promise resolving to the updated player record
+ * @throws Error if validation fails or players don't exist
+ */
+const linkPlayerRecords = async ({
+  oldName,
+  newName,
+}: {
+  oldName: string;
+  newName: string;
+}): Promise<PlayerRecord> => {
+  try {
+    // Validate input parameters
+    if (!oldName?.trim() || !newName?.trim()) {
+      throw new Error(
+        'Both oldName and newName are required and cannot be empty'
+      );
+    }
+
+    if (oldName.trim().toLowerCase() === newName.trim().toLowerCase()) {
+      throw new Error('Cannot link a player to themselves');
+    }
+
+    // Validate player existence and get records
+    const oldPlayer = await findPlayerByName({ name: oldName });
+    const newPlayer = await findPlayerByName({ name: newName });
+
+    if (!oldPlayer) {
+      throw new Error(`Player with name "${oldName}" not found`);
+    }
+
+    if (!newPlayer) {
+      throw new Error(`Player with name "${newName}" not found`);
+    }
+
+    if (oldPlayer.id === newPlayer.id) {
+      logger.info(
+        `Players ${oldName} and ${newName} are already the same record`
+      );
+      throw new Error('Players are already the same record');
+    }
+
+    // Execute all operations in a transaction
+    const result = await client.$transaction(async (prisma) => {
+      // Update all references to point to the new player
+      await updatePlayerReferences(prisma, oldPlayer.id, newPlayer.id);
+
+      // Create alias for the old name
+      await createPlayerAlias(prisma, newPlayer.id, oldPlayer.currentName);
+
+      // Delete the old player record
+      await prisma.player.delete({
+        where: { id: oldPlayer.id },
+      });
+
+      return {
+        id: newPlayer.id,
+        name: newPlayer.currentName,
+      };
+    });
+
+    logger.info(
+      `Successfully linked player records: ${oldName} -> ${newPlayer.currentName}`
+    );
+    return result;
+  } catch (error) {
+    logger.error(
+      `Failed to link player records ${oldName} -> ${newName}:`,
+      error
+    );
+    throw new Error(
+      `Failed to link player records: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`
+    );
+  }
+};
+
+const getPlayerNames = async ({
+  playerId,
+}: {
+  playerId: string;
+}): Promise<string[]> => {
+  const player = await client.player.findUnique({
+    where: { id: playerId },
+    include: {
+      aliases: true,
+    },
+  });
+
+  if (!player) {
+    throw new Error(`Player with ID ${playerId} not found`);
+  }
+
+  return [player.name, ...player.aliases.map((alias) => alias.name)];
 };
 
 const getPlayerById = async ({ id }: { id: string }) => {
@@ -341,7 +403,6 @@ export const playerData = {
   createTournamentPlayer,
   findTournamentPlayer,
   updatePlayerName,
-  updatePlayerReferences,
   linkPlayerRecords,
   getPlayerNames,
   findPlayerByName,

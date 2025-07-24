@@ -1,24 +1,24 @@
 import { playerData } from './player.data';
 import logger from '../../utils/logger';
 
+interface PlayerMatch {
+  id: string;
+  winner: boolean | null;
+  generation: string;
+  tier: string;
+  stage: string;
+  year: number;
+  tournamentName: string;
+  opponentName: string;
+  opponentId: string;
+}
+
 interface PlayerWithStats {
   id: string;
   name: string;
   matchesWon: number;
   matchesLost: number;
   deadGames: number;
-}
-
-interface PlayerMatch {
-  id: string;
-  winner: boolean | null;
-  generation: string;
-  tier: string;
-  stage: string | null;
-  year: number;
-  tournamentName: string;
-  opponentName: string;
-  opponentId: string;
 }
 
 interface PlayerDetails {
@@ -136,6 +136,16 @@ export const createTournamentPlayer = async ({
   });
 };
 
+/**
+ * Links two player records by merging all associated data from one player to another
+ * This operation moves all matches, games, and tournament records from the old player
+ * to the new player, creates an alias for the old name, and deletes the old player record
+ *
+ * @param oldName - Name of the player to be merged (will be deleted after merge)
+ * @param newName - Name of the target player (will receive all merged data)
+ * @returns Promise resolving to the updated player record with all aliases
+ * @throws Error if validation fails, players don't exist, or merge operation fails
+ */
 export const linkPlayerRecords = async ({
   oldName,
   newName,
@@ -143,37 +153,30 @@ export const linkPlayerRecords = async ({
   oldName: string;
   newName: string;
 }): Promise<PlayerRecord> => {
-  // Find both players
-  const oldPlayer = await playerData.findPlayerByName({ name: oldName });
-  const newPlayer = await playerData.findPlayerByName({ name: newName });
+  try {
+    // Use the data layer implementation which properly merges all records
+    const result = await playerData.linkPlayerRecords({ oldName, newName });
 
-  if (!oldPlayer || !newPlayer) {
-    throw new Error('Both players must exist to link records');
-  }
+    // Convert data layer result to service layer format (add aliases)
+    const linkedPlayer = await playerData.findPlayerByName({
+      name: result.name,
+    });
+    if (!linkedPlayer) {
+      throw new Error('Failed to retrieve linked player after merge');
+    }
 
-  if (oldPlayer.id === newPlayer.id) {
-    logger.info(
-      `Players ${oldName} and ${newName} are already the same record`
-    );
     return {
-      id: oldPlayer.id,
-      name: oldPlayer.currentName,
-      aliases: oldPlayer.aliases,
+      id: result.id,
+      name: result.name,
+      aliases: linkedPlayer.aliases,
     };
+  } catch (error) {
+    logger.error(
+      `Error linking player records ${oldName} -> ${newName}:`,
+      error
+    );
+    throw error;
   }
-
-  // Link the records by creating an alias and updating the current name
-  await playerData.updatePlayerName({
-    playerId: oldPlayer.id,
-    newName: newPlayer.currentName,
-  });
-
-  logger.info(`Linked player records: ${oldName} -> ${newPlayer.currentName}`);
-  return {
-    id: oldPlayer.id,
-    name: newPlayer.currentName,
-    aliases: newPlayer.aliases,
-  };
 };
 
 export const getPlayerById = async (id: string): Promise<PlayerDetails> => {

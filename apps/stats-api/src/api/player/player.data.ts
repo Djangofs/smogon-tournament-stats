@@ -141,35 +141,50 @@ const updatePlayerName = async ({
   }
 };
 
-/**
- * Validates that both players exist and are different
- * @param oldName - Name of the player to be merged
- * @param newName - Name of the target player
- * @returns Object containing both player records
- */
-const validatePlayerExistence = async (
-  oldName: string, 
-  newName: string
-): Promise<{ oldPlayer: NonNullable<Awaited<ReturnType<typeof findPlayerByName>>>, newPlayer: NonNullable<Awaited<ReturnType<typeof findPlayerByName>>> }> => {
-  const oldPlayer = await findPlayerByName({ name: oldName });
-  const newPlayer = await findPlayerByName({ name: newName });
+const findPlayerByName = async ({
+  name,
+}: {
+  name: string;
+}): Promise<{
+  id: string;
+  currentName: string;
+  aliases: string[];
+} | null> => {
+  // Try to find by current name
+  const player = await client.player.findFirst({
+    where: { name },
+    include: { aliases: true },
+  });
 
-  if (!oldPlayer) {
-    throw new Error(`Player with name "${oldName}" not found`);
+  if (player) {
+    return {
+      id: player.id,
+      currentName: player.name,
+      aliases: player.aliases.map((alias) => alias.name),
+    };
   }
 
-  if (!newPlayer) {
-    throw new Error(`Player with name "${newName}" not found`);
+  // Try to find by alias
+  const alias = await client.playerAlias.findFirst({
+    where: { name },
+    include: {
+      player: {
+        include: {
+          aliases: true,
+        },
+      },
+    },
+  });
+
+  if (alias) {
+    return {
+      id: alias.playerId,
+      currentName: alias.player.name,
+      aliases: alias.player.aliases.map((alias) => alias.name),
+    };
   }
 
-  if (oldPlayer.id === newPlayer.id) {
-    logger.info(
-      `Players ${oldName} and ${newName} are already the same record`
-    );
-    throw new Error('Players are already the same record');
-  }
-
-  return { oldPlayer, newPlayer };
+  return null;
 };
 
 /**
@@ -243,7 +258,10 @@ const linkPlayerRecords = async ({
 }: {
   oldName: string;
   newName: string;
-}): Promise<PlayerRecord> => {
+}, 
+// Allow dependency injection for testing
+findPlayerByNameFn = findPlayerByName
+): Promise<PlayerRecord> => {
   try {
     // Validate input parameters
     if (!oldName?.trim() || !newName?.trim()) {
@@ -257,7 +275,23 @@ const linkPlayerRecords = async ({
     }
 
     // Validate player existence and get records
-    const { oldPlayer, newPlayer } = await validatePlayerExistence(oldName, newName);
+    const oldPlayer = await findPlayerByNameFn({ name: oldName });
+    const newPlayer = await findPlayerByNameFn({ name: newName });
+
+    if (!oldPlayer) {
+      throw new Error(`Player with name "${oldName}" not found`);
+    }
+
+    if (!newPlayer) {
+      throw new Error(`Player with name "${newName}" not found`);
+    }
+
+    if (oldPlayer.id === newPlayer.id) {
+      logger.info(
+        `Players ${oldName} and ${newName} are already the same record`
+      );
+      throw new Error('Players are already the same record');
+    }
 
     // Execute all operations in a transaction
     const result = await client.$transaction(async (prisma) => {
@@ -312,52 +346,6 @@ const getPlayerNames = async ({
   }
 
   return [player.name, ...player.aliases.map((alias) => alias.name)];
-};
-
-const findPlayerByName = async ({
-  name,
-}: {
-  name: string;
-}): Promise<{
-  id: string;
-  currentName: string;
-  aliases: string[];
-} | null> => {
-  // Try to find by current name
-  const player = await client.player.findFirst({
-    where: { name },
-    include: { aliases: true },
-  });
-
-  if (player) {
-    return {
-      id: player.id,
-      currentName: player.name,
-      aliases: player.aliases.map((alias) => alias.name),
-    };
-  }
-
-  // Try to find by alias
-  const alias = await client.playerAlias.findFirst({
-    where: { name },
-    include: {
-      player: {
-        include: {
-          aliases: true,
-        },
-      },
-    },
-  });
-
-  if (alias) {
-    return {
-      id: alias.playerId,
-      currentName: alias.player.name,
-      aliases: alias.player.aliases.map((alias) => alias.name),
-    };
-  }
-
-  return null;
 };
 
 const getPlayerById = async ({ id }: { id: string }) => {
@@ -418,9 +406,13 @@ export const playerData = {
   createTournamentPlayer,
   findTournamentPlayer,
   updatePlayerName,
-  linkPlayerRecords,
+  linkPlayerRecords: (params: { oldName: string; newName: string }) => 
+    linkPlayerRecords(params, findPlayerByName),
   getPlayerNames,
   findPlayerByName,
   getPlayerById,
   addPlayerAlias,
 };
+
+// Export for testing
+export { linkPlayerRecords, findPlayerByName };

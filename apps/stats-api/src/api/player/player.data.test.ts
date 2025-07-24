@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import { playerData } from './player.data';
 import logger from '../../utils/logger';
 
 // Mock Prisma client
@@ -33,71 +32,117 @@ const mockPrismaClient = {
 
 const mockLogger = logger as jest.Mocked<typeof logger>;
 
+// Import after mocking
+import { playerData, linkPlayerRecords } from './player.data';
+
 describe('playerData.linkPlayerRecords', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Setup default transaction behavior
-    mockPrismaClient.$transaction.mockImplementation((callback) => callback(mockPrismaClient));
+    mockPrismaClient.$transaction.mockImplementation((callback) =>
+      callback(mockPrismaClient)
+    );
   });
 
   describe('input validation', () => {
     it('should reject empty oldName', async () => {
+      const mockFindPlayerByName = jest.fn();
+      
       await expect(
-        playerData.linkPlayerRecords({ oldName: '', newName: 'ValidName' })
-      ).rejects.toThrow('Failed to link player records: oldName is required and cannot be empty');
+        linkPlayerRecords({ oldName: '', newName: 'ValidName' }, mockFindPlayerByName)
+      ).rejects.toThrow(
+        'Failed to link player records: Both oldName and newName are required and cannot be empty'
+      );
     });
 
     it('should reject empty newName', async () => {
+      const mockFindPlayerByName = jest.fn();
+      
       await expect(
-        playerData.linkPlayerRecords({ oldName: 'ValidName', newName: '' })
-      ).rejects.toThrow('Failed to link player records: newName is required and cannot be empty');
+        linkPlayerRecords({ oldName: 'ValidName', newName: '' }, mockFindPlayerByName)
+      ).rejects.toThrow(
+        'Failed to link player records: Both oldName and newName are required and cannot be empty'
+      );
     });
 
     it('should reject null oldName', async () => {
+      const mockFindPlayerByName = jest.fn();
+      
       await expect(
-        playerData.linkPlayerRecords({ oldName: null as any, newName: 'ValidName' })
-      ).rejects.toThrow('Failed to link player records: oldName is required and cannot be empty');
+        linkPlayerRecords({
+          oldName: null as any,
+          newName: 'ValidName',
+        }, mockFindPlayerByName)
+      ).rejects.toThrow(
+        'Failed to link player records: Both oldName and newName are required and cannot be empty'
+      );
     });
 
     it('should reject whitespace-only names', async () => {
+      const mockFindPlayerByName = jest.fn();
+      
       await expect(
-        playerData.linkPlayerRecords({ oldName: '   ', newName: 'ValidName' })
-      ).rejects.toThrow('Failed to link player records: oldName is required and cannot be empty');
+        linkPlayerRecords({ oldName: '   ', newName: 'ValidName' }, mockFindPlayerByName)
+      ).rejects.toThrow(
+        'Failed to link player records: Both oldName and newName are required and cannot be empty'
+      );
     });
 
     it('should reject identical names', async () => {
+      const mockFindPlayerByName = jest.fn();
+      
       await expect(
-        playerData.linkPlayerRecords({ oldName: 'SameName', newName: 'SameName' })
+        linkPlayerRecords({
+          oldName: 'SameName',
+          newName: 'SameName',
+        }, mockFindPlayerByName)
       ).rejects.toThrow('Failed to link player records: Cannot link a player to themselves');
     });
 
     it('should reject identical names with different casing', async () => {
+      const mockFindPlayerByName = jest.fn();
+      
       await expect(
-        playerData.linkPlayerRecords({ oldName: 'PlayerName', newName: 'playername' })
+        linkPlayerRecords({
+          oldName: 'PlayerName',
+          newName: 'playername',
+        }, mockFindPlayerByName)
       ).rejects.toThrow('Failed to link player records: Cannot link a player to themselves');
     });
   });
 
   describe('player existence validation', () => {
     it('should reject when oldPlayer does not exist', async () => {
-      // Mock findPlayerByName to return null for oldPlayer, valid for newPlayer
-      jest.spyOn(playerData, 'findPlayerByName')
+      // Create mock function
+      const mockFindPlayerByName = jest
+        .fn()
         .mockResolvedValueOnce(null) // oldPlayer
-        .mockResolvedValueOnce({ // newPlayer
+        .mockResolvedValueOnce({
+          // newPlayer
           id: 'new-player-id',
           currentName: 'NewPlayer',
           aliases: [],
         });
 
       await expect(
-        playerData.linkPlayerRecords({ oldName: 'NonExistent', newName: 'NewPlayer' })
-      ).rejects.toThrow('Failed to link player records: Player with name "NonExistent" not found');
+        linkPlayerRecords(
+          {
+            oldName: 'NonExistent',
+            newName: 'NewPlayer',
+          },
+          mockFindPlayerByName
+        )
+      ).rejects.toThrow(
+        'Failed to link player records: Player with name "NonExistent" not found'
+      );
     });
 
     it('should reject when newPlayer does not exist', async () => {
-      // Mock findPlayerByName to return valid for oldPlayer, null for newPlayer
-      jest.spyOn(playerData, 'findPlayerByName')
-        .mockResolvedValueOnce({ // oldPlayer
+      // Create mock function
+      const mockFindPlayerByName = jest
+        .fn()
+        .mockResolvedValueOnce({
+          // oldPlayer
           id: 'old-player-id',
           currentName: 'OldPlayer',
           aliases: [],
@@ -105,8 +150,16 @@ describe('playerData.linkPlayerRecords', () => {
         .mockResolvedValueOnce(null); // newPlayer
 
       await expect(
-        playerData.linkPlayerRecords({ oldName: 'OldPlayer', newName: 'NonExistent' })
-      ).rejects.toThrow('Failed to link player records: Player with name "NonExistent" not found');
+        linkPlayerRecords(
+          {
+            oldName: 'OldPlayer',
+            newName: 'NonExistent',
+          },
+          mockFindPlayerByName
+        )
+      ).rejects.toThrow(
+        'Failed to link player records: Player with name "NonExistent" not found'
+      );
     });
 
     it('should reject when players are already the same record', async () => {
@@ -116,13 +169,13 @@ describe('playerData.linkPlayerRecords', () => {
         aliases: ['Alias1'],
       };
 
-      jest.spyOn(playerData, 'findPlayerByName').mockResolvedValue(samePlayer);
+      const mockFindPlayerByName = jest.fn().mockResolvedValue(samePlayer);
 
       await expect(
-        playerData.linkPlayerRecords({
+        linkPlayerRecords({
           oldName: 'PlayerName',
           newName: 'Alias1',
-        })
+        }, mockFindPlayerByName)
       ).rejects.toThrow(
         'Failed to link player records: Players are already the same record'
       );
@@ -146,7 +199,7 @@ describe('playerData.linkPlayerRecords', () => {
         aliases: ['NewAlias'],
       };
 
-      jest.spyOn(playerData, 'findPlayerByName')
+      const mockFindPlayerByName = jest.fn()
         .mockResolvedValueOnce(oldPlayer)
         .mockResolvedValueOnce(newPlayer);
 
@@ -162,10 +215,10 @@ describe('playerData.linkPlayerRecords', () => {
       });
       mockPrismaClient.player.delete.mockResolvedValue(oldPlayer);
 
-      const result = await playerData.linkPlayerRecords({
+      const result = await linkPlayerRecords({
         oldName: 'OldPlayer',
         newName: 'NewPlayer',
-      });
+      }, mockFindPlayerByName);
 
       // Verify all operations were called correctly
       expect(mockPrismaClient.player_Game.updateMany).toHaveBeenCalledWith({
@@ -212,7 +265,7 @@ describe('playerData.linkPlayerRecords', () => {
         aliases: ['OldPlayer'], // Already has this alias
       };
 
-      jest.spyOn(playerData, 'findPlayerByName')
+      const mockFindPlayerByName = jest.fn()
         .mockResolvedValueOnce(oldPlayer)
         .mockResolvedValueOnce(newPlayer);
 
@@ -228,10 +281,10 @@ describe('playerData.linkPlayerRecords', () => {
       mockPrismaClient.tournament_Player.updateMany.mockResolvedValue({ count: 0 });
       mockPrismaClient.player.delete.mockResolvedValue(oldPlayer);
 
-      await playerData.linkPlayerRecords({
+      await linkPlayerRecords({
         oldName: 'OldPlayer',
         newName: 'NewPlayer',
-      });
+      }, mockFindPlayerByName);
 
       // Verify alias creation was skipped
       expect(mockPrismaClient.playerAlias.create).not.toHaveBeenCalled();
@@ -251,7 +304,7 @@ describe('playerData.linkPlayerRecords', () => {
         aliases: [],
       };
 
-      jest.spyOn(playerData, 'findPlayerByName')
+      const mockFindPlayerByName = jest.fn()
         .mockResolvedValueOnce(oldPlayer)
         .mockResolvedValueOnce(newPlayer);
 
@@ -259,8 +312,10 @@ describe('playerData.linkPlayerRecords', () => {
       mockPrismaClient.$transaction.mockRejectedValue(transactionError);
 
       await expect(
-        playerData.linkPlayerRecords({ oldName: 'OldPlayer', newName: 'NewPlayer' })
-      ).rejects.toThrow('Failed to link player records: Database transaction failed');
+        linkPlayerRecords({ oldName: 'OldPlayer', newName: 'NewPlayer' }, mockFindPlayerByName)
+      ).rejects.toThrow(
+        'Failed to link player records: Database transaction failed'
+      );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to link player records OldPlayer -> NewPlayer:',
@@ -280,14 +335,14 @@ describe('playerData.linkPlayerRecords', () => {
         aliases: [],
       };
 
-      jest.spyOn(playerData, 'findPlayerByName')
+      const mockFindPlayerByName = jest.fn()
         .mockResolvedValueOnce(oldPlayer)
         .mockResolvedValueOnce(newPlayer);
 
       mockPrismaClient.$transaction.mockRejectedValue('Unknown error');
 
       await expect(
-        playerData.linkPlayerRecords({ oldName: 'OldPlayer', newName: 'NewPlayer' })
+        linkPlayerRecords({ oldName: 'OldPlayer', newName: 'NewPlayer' }, mockFindPlayerByName)
       ).rejects.toThrow('Failed to link player records: Unknown error');
     });
   });
@@ -305,7 +360,7 @@ describe('playerData.linkPlayerRecords', () => {
         aliases: [],
       };
 
-      jest.spyOn(playerData, 'findPlayerByName')
+      const mockFindPlayerByName = jest.fn()
         .mockResolvedValueOnce(oldPlayer)
         .mockResolvedValueOnce(newPlayer);
 
@@ -316,10 +371,10 @@ describe('playerData.linkPlayerRecords', () => {
       mockPrismaClient.playerAlias.create.mockResolvedValue({});
       mockPrismaClient.player.delete.mockResolvedValue(oldPlayer);
 
-      await playerData.linkPlayerRecords({
+      await linkPlayerRecords({
         oldName: 'OldPlayer',
         newName: 'NewPlayer',
-      });
+      }, mockFindPlayerByName);
 
       // Verify transaction was used
       expect(mockPrismaClient.$transaction).toHaveBeenCalledTimes(1);

@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import { z } from 'zod';
 import logger from '../../utils/logger';
 
 const client = new PrismaClient();
@@ -8,18 +7,6 @@ interface PlayerRecord {
   id: string;
   name: string;
 }
-
-// Validation schema for linking player records
-const linkPlayerRecordsSchema = z.object({
-  oldName: z.string().min(1, 'oldName is required and cannot be empty'),
-  newName: z.string().min(1, 'newName is required and cannot be empty'),
-}).refine(
-  (data) => data.oldName.trim().toLowerCase() !== data.newName.trim().toLowerCase(),
-  {
-    message: 'Cannot link a player to themselves',
-    path: ['newName'],
-  }
-);
 
 const getAllPlayers = async ({
   generation,
@@ -155,24 +142,6 @@ const updatePlayerName = async ({
 };
 
 /**
- * Validates input parameters for linking player records
- * @param oldName - Name of the player to be merged
- * @param newName - Name of the target player
- * @throws Error if validation fails
- */
-const validateLinkingInput = (oldName: string, newName: string): void => {
-  try {
-    linkPlayerRecordsSchema.parse({ oldName, newName });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const message = error.errors.map(e => e.message).join(', ');
-      throw new Error(message);
-    }
-    throw error;
-  }
-};
-
-/**
  * Validates that both players exist and are different
  * @param oldName - Name of the player to be merged
  * @param newName - Name of the target player
@@ -277,7 +246,15 @@ const linkPlayerRecords = async ({
 }): Promise<PlayerRecord> => {
   try {
     // Validate input parameters
-    validateLinkingInput(oldName, newName);
+    if (!oldName?.trim() || !newName?.trim()) {
+      throw new Error(
+        'Both oldName and newName are required and cannot be empty'
+      );
+    }
+
+    if (oldName.trim().toLowerCase() === newName.trim().toLowerCase()) {
+      throw new Error('Cannot link a player to themselves');
+    }
 
     // Validate player existence and get records
     const { oldPlayer, newPlayer } = await validatePlayerExistence(oldName, newName);

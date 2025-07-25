@@ -1,17 +1,17 @@
-import { dbClient } from '../../database/client';
+import { getDbClient } from '../../database/client';
 
 const getAllTournaments = async () => {
-  return dbClient.tournament.findMany();
+  return getDbClient().tournament.findMany();
 };
 
 const findTournament = async ({ name }: { name: string }) => {
-  return dbClient.tournament.findFirst({
+  return getDbClient().tournament.findFirst({
     where: { name },
   });
 };
 
 const getTournamentById = async (id: string) => {
-  return dbClient.tournament.findUnique({
+  return getDbClient().tournament.findUnique({
     where: { id },
     include: {
       rounds: {
@@ -49,7 +49,7 @@ const createTournament = async ({
   year: number;
   replayPostUrl?: string;
 }) => {
-  return dbClient.tournament.create({
+  return getDbClient().tournament.create({
     data: { name, isOfficial, isTeam, year, replayPostUrl },
   });
 };

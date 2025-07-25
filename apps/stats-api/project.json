@@ -19,6 +19,22 @@
         },
         "production": {
           "buildTarget": "stats-api:build:production"
+        },
+        "test": {
+          "buildTarget": "stats-api:build:development",
+          "env": {
+            "NODE_ENV": "test"
+          }
+        }
+      }
+    },
+    "serve:test-db": {
+      "executor": "@nx/js:node",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "stats-api:build:development",
+        "env": {
+          "TEST_DATABASE_URL": "postgresql://user:pass@localhost:5432/smogon_test"
         }
       }
     },

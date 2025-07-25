@@ -1,15 +1,15 @@
-import { dbClient } from '../../database/client';
+import { getDbClient } from '../../database/client';
 
 const getAllTeams = async () => {
-  return dbClient.team.findMany();
+  return getDbClient().team.findMany();
 };
 
 const findTeam = async ({ name }: { name: string }) => {
-  return dbClient.team.findFirst({ where: { name } });
+  return getDbClient().team.findFirst({ where: { name } });
 };
 
 const createTeam = async ({ name }: { name: string }) => {
-  return dbClient.team.create({ data: { name } });
+  return getDbClient().team.create({ data: { name } });
 };
 
 const createTournamentTeam = async ({
@@ -19,7 +19,7 @@ const createTournamentTeam = async ({
   tournamentId: string;
   teamId: string;
 }) => {
-  return dbClient.tournament_Team.create({ data: { tournamentId, teamId } });
+  return getDbClient().tournament_Team.create({ data: { tournamentId, teamId } });
 };
 
 const findTournamentTeam = async ({
@@ -29,7 +29,7 @@ const findTournamentTeam = async ({
   tournamentId: string;
   teamId: string;
 }) => {
-  return dbClient.tournament_Team.findFirst({
+  return getDbClient().tournament_Team.findFirst({
     where: { tournamentId, teamId },
   });
 };

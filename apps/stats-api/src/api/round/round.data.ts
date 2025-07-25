@@ -1,4 +1,4 @@
-import { dbClient } from '../../database/client';
+import { getDbClient } from '../../database/client';
 
 const findRound = async ({
   tournamentId,
@@ -7,7 +7,7 @@ const findRound = async ({
   tournamentId: string;
   name: string;
 }) => {
-  return dbClient.round.findFirst({
+  return getDbClient().round.findFirst({
     where: {
       tournamentId,
       name,
@@ -22,7 +22,7 @@ const createRound = async ({
   tournamentId: string;
   name: string;
 }) => {
-  return dbClient.round.create({
+  return getDbClient().round.create({
     data: {
       tournamentId,
       name,
@@ -35,7 +35,7 @@ const getTournamentRounds = async ({
 }: {
   tournamentId: string;
 }) => {
-  return dbClient.round.findMany({
+  return getDbClient().round.findMany({
     where: {
       tournamentId,
     },
@@ -46,7 +46,7 @@ const getTournamentRounds = async ({
 };
 
 const getRound = async ({ roundId }: { roundId: string }) => {
-  return dbClient.round.findUnique({
+  return getDbClient().round.findUnique({
     where: {
       id: roundId,
     },

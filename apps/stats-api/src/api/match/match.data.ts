@@ -1,4 +1,4 @@
-import { dbClient } from '../../database/client';
+import { getDbClient } from '../../database/client';
 
 const createMatch = async ({
   roundId,
@@ -19,7 +19,7 @@ const createMatch = async ({
   playedAt: Date;
   stage: string | null;
 }) => {
-  return dbClient.match.create({
+  return getDbClient().match.create({
     data: {
       roundId,
       bestOf,
@@ -42,7 +42,7 @@ const createPlayerMatch = async ({
   tournament_teamId: string;
   winner: boolean;
 }) => {
-  return dbClient.player_Match.create({
+  return getDbClient().player_Match.create({
     data: {
       playerId,
       matchId,
@@ -53,7 +53,7 @@ const createPlayerMatch = async ({
 };
 
 const getRoundMatches = async ({ roundId }: { roundId: string }) => {
-  return dbClient.match.findMany({
+  return getDbClient().match.findMany({
     where: {
       roundId,
     },
@@ -70,7 +70,7 @@ const getRoundMatches = async ({ roundId }: { roundId: string }) => {
 };
 
 const getMatch = async ({ matchId }: { matchId: string }) => {
-  return dbClient.match.findUnique({
+  return getDbClient().match.findUnique({
     where: {
       id: matchId,
     },
@@ -101,7 +101,7 @@ const findPlayerMatch = async ({
   playerId: string;
   matchId: string;
 }) => {
-  return dbClient.player_Match.findUnique({
+  return getDbClient().player_Match.findUnique({
     where: {
       playerId_matchId: {
         playerId,
@@ -120,7 +120,7 @@ const findMatch = async ({
   player1Id: string;
   player2Id: string;
 }) => {
-  const matches = await dbClient.match.findMany({
+  const matches = await getDbClient().match.findMany({
     where: {
       roundId,
       AND: [

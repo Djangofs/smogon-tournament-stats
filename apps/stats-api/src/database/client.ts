@@ -41,5 +41,6 @@ class DatabaseClient {
   }
 }
 
-export const dbClient = DatabaseClient.getInstance();
+// Export getter function instead of pre-instantiated client
+export const getDbClient = (): PrismaClient => DatabaseClient.getInstance();
 export const DatabaseManager = DatabaseClient;

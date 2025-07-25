@@ -1,4 +1,4 @@
-import { dbClient } from '../../database/client';
+import { getDbClient } from '../../database/client';
 
 const createGame = async ({
   matchId,
@@ -19,7 +19,7 @@ const createGame = async ({
   playedAt: Date;
   replayUrl?: string;
 }) => {
-  return dbClient.game.create({
+  return getDbClient().game.create({
     data: {
       matchId,
       generation,
@@ -39,7 +39,7 @@ const createPlayerGame = async ({
   gameId: string;
   winner: boolean;
 }) => {
-  return dbClient.player_Game.create({
+  return getDbClient().player_Game.create({
     data: {
       playerId,
       gameId,
@@ -49,7 +49,7 @@ const createPlayerGame = async ({
 };
 
 const getMatchGames = async ({ matchId }: { matchId: string }) => {
-  return dbClient.game.findMany({
+  return getDbClient().game.findMany({
     where: {
       matchId,
     },
@@ -64,7 +64,7 @@ const getMatchGames = async ({ matchId }: { matchId: string }) => {
 };
 
 const getGame = async ({ gameId }: { gameId: string }) => {
-  return dbClient.game.findUnique({
+  return getDbClient().game.findUnique({
     where: {
       id: gameId,
     },
@@ -85,7 +85,7 @@ const findPlayerGame = async ({
   playerId: string;
   gameId: string;
 }) => {
-  return dbClient.player_Game.findUnique({
+  return getDbClient().player_Game.findUnique({
     where: {
       playerId_gameId: {
         playerId,

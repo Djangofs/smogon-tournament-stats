@@ -9,6 +9,9 @@ const envSchema = z.object({
   // Server Configuration
   PORT: z.string().transform(Number).default('3333'),
 
+  // Database Configuration
+  DATABASE_URL: z.string(),
+
   // Auth0 Configuration
   AUTH0_DOMAIN: z.string(),
   AUTH0_AUDIENCE: z.string(),
@@ -27,6 +30,9 @@ const env = envSchema.parse(process.env);
 export const config = {
   server: {
     port: env.PORT,
+  },
+  database: {
+    url: env.DATABASE_URL,
   },
   google: {
     apiKey: env.GOOGLE_API_KEY,

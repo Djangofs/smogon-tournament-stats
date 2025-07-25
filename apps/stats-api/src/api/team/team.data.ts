@@ -1,17 +1,15 @@
-import { PrismaClient } from '@prisma/client';
-
-const client = new PrismaClient();
+import { dbClient } from '../../database/client';
 
 const getAllTeams = async () => {
-  return client.team.findMany();
+  return dbClient.team.findMany();
 };
 
 const findTeam = async ({ name }: { name: string }) => {
-  return client.team.findFirst({ where: { name } });
+  return dbClient.team.findFirst({ where: { name } });
 };
 
 const createTeam = async ({ name }: { name: string }) => {
-  return client.team.create({ data: { name } });
+  return dbClient.team.create({ data: { name } });
 };
 
 const createTournamentTeam = async ({
@@ -21,7 +19,7 @@ const createTournamentTeam = async ({
   tournamentId: string;
   teamId: string;
 }) => {
-  return client.tournament_Team.create({ data: { tournamentId, teamId } });
+  return dbClient.tournament_Team.create({ data: { tournamentId, teamId } });
 };
 
 const findTournamentTeam = async ({
@@ -31,7 +29,9 @@ const findTournamentTeam = async ({
   tournamentId: string;
   teamId: string;
 }) => {
-  return client.tournament_Team.findFirst({ where: { tournamentId, teamId } });
+  return dbClient.tournament_Team.findFirst({
+    where: { tournamentId, teamId },
+  });
 };
 
 export const teamData = {

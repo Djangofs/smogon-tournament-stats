@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { dbClient } from '../../database/client';
 import logger from '../../utils/logger';
-
-const client = new PrismaClient();
 
 interface PlayerRecord {
   id: string;
@@ -26,7 +24,7 @@ const getAllPlayers = async ({
   const tiers = tier?.split(',');
   const stages = stage?.split(',');
 
-  return client.player.findMany({
+  return dbClient.player.findMany({
     include: {
       matches: {
         where: {
@@ -71,15 +69,15 @@ const getAllPlayers = async ({
 };
 
 const createPlayer = async ({ name }: { name: string }) => {
-  return client.player.create({ data: { name } });
+  return dbClient.player.create({ data: { name } });
 };
 
 const createPlayers = async ({ names }: { names: string[] }) => {
-  return client.player.createMany({ data: names.map((name) => ({ name })) });
+  return dbClient.player.createMany({ data: names.map((name) => ({ name })) });
 };
 
 const findPlayer = async ({ name }: { name: string }) => {
-  return client.player.findFirst({ where: { name } });
+  return dbClient.player.findFirst({ where: { name } });
 };
 
 const createTournamentPlayer = async ({
@@ -91,7 +89,7 @@ const createTournamentPlayer = async ({
   playerId: string;
   price: number;
 }) => {
-  return client.tournament_Player.create({
+  return dbClient.tournament_Player.create({
     data: { playerId, tournament_teamId: tournamentTeamId, price },
   });
 };
@@ -103,7 +101,7 @@ const findTournamentPlayer = async ({
   tournamentTeamId: string;
   playerId: string;
 }) => {
-  return client.tournament_Player.findFirst({
+  return dbClient.tournament_Player.findFirst({
     where: { playerId, tournament_teamId: tournamentTeamId },
   });
 };
@@ -115,7 +113,7 @@ const updatePlayerName = async ({
   playerId: string;
   newName: string;
 }): Promise<void> => {
-  const player = await client.player.findUnique({
+  const player = await dbClient.player.findUnique({
     where: { id: playerId },
   });
 
@@ -126,7 +124,7 @@ const updatePlayerName = async ({
   // If the new name is different from the current name
   if (player.name !== newName) {
     // Create a new alias for the old name
-    await client.playerAlias.create({
+    await dbClient.playerAlias.create({
       data: {
         playerId,
         name: player.name,
@@ -134,7 +132,7 @@ const updatePlayerName = async ({
     });
 
     // Update the player's current name
-    await client.player.update({
+    await dbClient.player.update({
       where: { id: playerId },
       data: { name: newName },
     });
@@ -149,19 +147,19 @@ const updatePlayerReferences = async ({
   newPlayerId: string;
 }): Promise<void> => {
   // Update all Player_Game records
-  await client.player_Game.updateMany({
+  await dbClient.player_Game.updateMany({
     where: { playerId: oldPlayerId },
     data: { playerId: newPlayerId },
   });
 
   // Update all Player_Match records
-  await client.player_Match.updateMany({
+  await dbClient.player_Match.updateMany({
     where: { playerId: oldPlayerId },
     data: { playerId: newPlayerId },
   });
 
   // Update all Tournament_Player records
-  await client.tournament_Player.updateMany({
+  await dbClient.tournament_Player.updateMany({
     where: { playerId: oldPlayerId },
     data: { playerId: newPlayerId },
   });
@@ -199,7 +197,7 @@ const linkPlayerRecords = async ({
   });
 
   // Create an alias for the old name
-  await client.playerAlias.create({
+  await dbClient.playerAlias.create({
     data: {
       playerId: newPlayer.id,
       name: oldPlayer.currentName,
@@ -207,7 +205,7 @@ const linkPlayerRecords = async ({
   });
 
   // Delete the old player record since we've moved everything to the new one
-  await client.player.delete({
+  await dbClient.player.delete({
     where: { id: oldPlayer.id },
   });
 
@@ -223,7 +221,7 @@ const getPlayerNames = async ({
 }: {
   playerId: string;
 }): Promise<string[]> => {
-  const player = await client.player.findUnique({
+  const player = await dbClient.player.findUnique({
     where: { id: playerId },
     include: {
       aliases: true,
@@ -247,7 +245,7 @@ const findPlayerByName = async ({
   aliases: string[];
 } | null> => {
   // Try to find by current name
-  const player = await client.player.findFirst({
+  const player = await dbClient.player.findFirst({
     where: { name },
     include: { aliases: true },
   });
@@ -261,7 +259,7 @@ const findPlayerByName = async ({
   }
 
   // Try to find by alias
-  const alias = await client.playerAlias.findFirst({
+  const alias = await dbClient.playerAlias.findFirst({
     where: { name },
     include: {
       player: {
@@ -284,7 +282,7 @@ const findPlayerByName = async ({
 };
 
 const getPlayerById = async ({ id }: { id: string }) => {
-  return client.player.findUnique({
+  return dbClient.player.findUnique({
     where: { id },
     include: {
       aliases: true,
@@ -317,7 +315,7 @@ const addPlayerAlias = async ({
   playerId: string;
   alias: string;
 }): Promise<void> => {
-  const player = await client.player.findUnique({
+  const player = await dbClient.player.findUnique({
     where: { id: playerId },
   });
 
@@ -325,7 +323,7 @@ const addPlayerAlias = async ({
     throw new Error(`Player with ID ${playerId} not found`);
   }
 
-  await client.playerAlias.create({
+  await dbClient.playerAlias.create({
     data: {
       playerId,
       name: alias,

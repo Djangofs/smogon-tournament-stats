@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const client = new PrismaClient();
+import { dbClient } from '../../database/client';
 
 const createGame = async ({
   matchId,
@@ -21,7 +19,7 @@ const createGame = async ({
   playedAt: Date;
   replayUrl?: string;
 }) => {
-  return client.game.create({
+  return dbClient.game.create({
     data: {
       matchId,
       generation,
@@ -41,7 +39,7 @@ const createPlayerGame = async ({
   gameId: string;
   winner: boolean;
 }) => {
-  return client.player_Game.create({
+  return dbClient.player_Game.create({
     data: {
       playerId,
       gameId,
@@ -51,7 +49,7 @@ const createPlayerGame = async ({
 };
 
 const getMatchGames = async ({ matchId }: { matchId: string }) => {
-  return client.game.findMany({
+  return dbClient.game.findMany({
     where: {
       matchId,
     },
@@ -66,7 +64,7 @@ const getMatchGames = async ({ matchId }: { matchId: string }) => {
 };
 
 const getGame = async ({ gameId }: { gameId: string }) => {
-  return client.game.findUnique({
+  return dbClient.game.findUnique({
     where: {
       id: gameId,
     },
@@ -87,7 +85,7 @@ const findPlayerGame = async ({
   playerId: string;
   gameId: string;
 }) => {
-  return client.player_Game.findUnique({
+  return dbClient.player_Game.findUnique({
     where: {
       playerId_gameId: {
         playerId,

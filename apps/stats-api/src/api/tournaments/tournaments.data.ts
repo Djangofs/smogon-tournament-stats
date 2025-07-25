@@ -1,19 +1,17 @@
-import { PrismaClient } from '@prisma/client';
-
-const client = new PrismaClient();
+import { dbClient } from '../../database/client';
 
 const getAllTournaments = async () => {
-  return client.tournament.findMany();
+  return dbClient.tournament.findMany();
 };
 
 const findTournament = async ({ name }: { name: string }) => {
-  return client.tournament.findFirst({
+  return dbClient.tournament.findFirst({
     where: { name },
   });
 };
 
 const getTournamentById = async (id: string) => {
-  return client.tournament.findUnique({
+  return dbClient.tournament.findUnique({
     where: { id },
     include: {
       rounds: {
@@ -51,7 +49,7 @@ const createTournament = async ({
   year: number;
   replayPostUrl?: string;
 }) => {
-  return client.tournament.create({
+  return dbClient.tournament.create({
     data: { name, isOfficial, isTeam, year, replayPostUrl },
   });
 };

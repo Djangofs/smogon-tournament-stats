@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const client = new PrismaClient();
+import { dbClient } from '../../database/client';
 
 const findRound = async ({
   tournamentId,
@@ -9,7 +7,7 @@ const findRound = async ({
   tournamentId: string;
   name: string;
 }) => {
-  return client.round.findFirst({
+  return dbClient.round.findFirst({
     where: {
       tournamentId,
       name,
@@ -24,7 +22,7 @@ const createRound = async ({
   tournamentId: string;
   name: string;
 }) => {
-  return client.round.create({
+  return dbClient.round.create({
     data: {
       tournamentId,
       name,
@@ -37,7 +35,7 @@ const getTournamentRounds = async ({
 }: {
   tournamentId: string;
 }) => {
-  return client.round.findMany({
+  return dbClient.round.findMany({
     where: {
       tournamentId,
     },
@@ -48,7 +46,7 @@ const getTournamentRounds = async ({
 };
 
 const getRound = async ({ roundId }: { roundId: string }) => {
-  return client.round.findUnique({
+  return dbClient.round.findUnique({
     where: {
       id: roundId,
     },
